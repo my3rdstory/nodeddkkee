@@ -123,9 +123,8 @@ echo "Bitcoin Core 데몬 실행 상태 확인 중..."
 if [ "$(whoami)" = "root" ]; then
     # root로 실행 중인 경우 su 명령을 사용하여 지정된 사용자로 실행
     if su - ${USER_NAME} -c "bitcoin-cli getblockchaininfo" &>/dev/null; then
-        echo "Bitcoin Core 데몬이 정상적으로 실행 중입니다."
-        # 정보 출력
-        su - ${USER_NAME} -c "bitcoin-cli getblockchaininfo | jq" || echo "경고: 타임체인 정보를 가져올 수 없습니다."
+        echo "타임체인 정보 조회 성공:"
+        su - ${USER_NAME} -c "bitcoin-cli getblockchaininfo | jq" || echo "경고: 타임체인 정보 출력에 실패했습니다."
     else
         echo "경고: Bitcoin Core 데몬이 실행 중이 아니거나 응답하지 않습니다."
         # 경고만 표시하고 계속 진행
@@ -133,9 +132,8 @@ if [ "$(whoami)" = "root" ]; then
 else
     # 이미 일반 사용자로 실행 중인 경우 직접 실행
     if bitcoin-cli getblockchaininfo &>/dev/null; then
-        echo "Bitcoin Core 데몬이 정상적으로 실행 중입니다."
-        # 정보 출력
-        bitcoin-cli getblockchaininfo | jq || echo "경고: 타임체인 정보를 가져올 수 없습니다."
+        echo "타임체인 정보 조회 성공:"
+        bitcoin-cli getblockchaininfo | jq || echo "경고: 타임체인 정보 출력에 실패했습니다."
     else
         echo "경고: Bitcoin Core 데몬이 실행 중이 아니거나 응답하지 않습니다."
         # 경고만 표시하고 계속 진행
@@ -324,7 +322,7 @@ while [ $ATTEMPT -le $MAX_ATTEMPTS ] && [ "$INFO_RETRIEVED" = "false" ]; do
     
     if [ "$(whoami)" = "root" ]; then
         # root로 실행 중인 경우 su 명령을 사용하여 지정된 사용자로 실행
-        if su - ${USER_NAME} -c "bitcoin-cli -rpcwait getblockchaininfo" &>/dev/null; then
+        if su - ${USER_NAME} -c "bitcoin-cli getblockchaininfo" &>/dev/null; then
             echo "타임체인 정보 조회 성공:"
             su - ${USER_NAME} -c "bitcoin-cli getblockchaininfo | jq" || echo "경고: 타임체인 정보 출력에 실패했습니다."
             INFO_RETRIEVED=true
@@ -340,7 +338,7 @@ while [ $ATTEMPT -le $MAX_ATTEMPTS ] && [ "$INFO_RETRIEVED" = "false" ]; do
         fi
     else
         # 이미 일반 사용자로 실행 중인 경우 직접 실행
-        if bitcoin-cli -rpcwait getblockchaininfo &>/dev/null; then
+        if bitcoin-cli getblockchaininfo &>/dev/null; then
             echo "타임체인 정보 조회 성공:"
             bitcoin-cli getblockchaininfo | jq || echo "경고: 타임체인 정보 출력에 실패했습니다."
             INFO_RETRIEVED=true
