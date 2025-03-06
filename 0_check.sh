@@ -47,11 +47,6 @@ detect_user() {
     else
         USER_NAME=$(whoami) || error_exit "사용자 계정을 감지할 수 없습니다."
     fi
-    
-    # 환경 변수 파일에 사용자 이름 저장
-    echo "USER_NAME=\"$USER_NAME\"" > nodeddkkee_env.sh
-    echo "RPC_PASSWORD=\"bitcoin\"" >> nodeddkkee_env.sh
-    chmod +x nodeddkkee_env.sh
 }
 
 # 시스템 업데이트 및 필요한 패키지 설치
@@ -84,5 +79,13 @@ update_system
 
 # 다운로드 디렉토리 생성
 create_download_dir
+
+# nodeddkkee_env.sh 파일 실행
+if [ -f "/home/${USER_NAME}/nodeddkkee_env.sh" ]; then
+    chmod +x "/home/${USER_NAME}/nodeddkkee_env.sh"
+    source "/home/${USER_NAME}/nodeddkkee_env.sh"
+else
+    error_exit "nodeddkkee_env.sh 파일이 존재하지 않습니다."
+fi
 
 echo "시스템 확인 및 준비가 완료되었습니다."

@@ -22,8 +22,8 @@ else
 fi
 
 # 변수 설정
-BITCOIN_VERSION="28.1"
-BITCOIN_ARCH="x86_64-linux-gnu"
+# BITCOIN_VERSION="28.1"
+# BITCOIN_ARCH="x86_64-linux-gnu"
 
 # 다운로드 디렉토리 확인 및 생성
 if [ ! -d ~/downloads ]; then

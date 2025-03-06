@@ -292,4 +292,17 @@ EOF
 log "토르 주소 정보가 ${OUTPUT_FILE} 파일에 저장되었습니다."
 
 # JSON 내용 출력
-cat "${OUTPUT_FILE}" || log "JSON 파일 출력 실패" 
+cat "${OUTPUT_FILE}" || log "JSON 파일 출력 실패"
+
+# nodeddkkee_env.sh에서 FULCRUM_CONF_DIR 경로 가져오기
+source nodeddkkee_env.sh
+
+# fulcrum.conf 파일에 토르 주소 추가
+FULCRUM_CONF="${FULCRUM_CONF_DIR}/fulcrum.conf"
+if [ -f "$FULCRUM_CONF" ]; then
+    echo "tor_hostname=${FULCRUM_ONION_ADDRESS}" >> "$FULCRUM_CONF"
+    echo "tor_tcp_port=50001" >> "$FULCRUM_CONF"
+    log "Fulcrum 설정 파일에 Tor 주소를 추가했습니다."
+else
+    log "경고: Fulcrum 설정 파일을 찾을 수 없습니다: $FULCRUM_CONF"
+fi 

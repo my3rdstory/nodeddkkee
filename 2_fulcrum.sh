@@ -28,13 +28,6 @@ else
     error_exit "환경 변수 파일(nodeddkkee_env.sh)을 찾을 수 없습니다. 0_check.sh를 먼저 실행해주세요."
 fi
 
-# 변수 설정
-FULCRUM_VERSION="1.9.1"
-FULCRUM_DIR="/home/${USER_NAME}/fulcrum"
-FULCRUM_DATA_DIR="${FULCRUM_DIR}/data"
-FULCRUM_CONF_DIR="${FULCRUM_DIR}/config"
-FULCRUM_SSL_DIR="${FULCRUM_DIR}/ssl"
-
 # 스크립트 실행 시작 메시지
 echo "Fulcrum 설치 스크립트를 시작합니다..."
 echo "설치할 Fulcrum 버전: ${FULCRUM_VERSION}"
@@ -58,12 +51,8 @@ cd ~/downloads || error_exit "다운로드 디렉토리로 이동할 수 없습�
 
 # 시스템 아키텍처 확인
 ARCH=$(uname -m)
-if [ "$ARCH" = "x86_64" ]; then
-    FULCRUM_ARCH="x86_64-linux"
-elif [ "$ARCH" = "aarch64" ]; then
-    FULCRUM_ARCH="arm64-linux"
-else
-    error_exit "지원되지 않는 아키텍처입니다: $ARCH"
+if [ -z "$FULCRUM_ARCH" ]; then
+    error_exit "FULCRUM_ARCH 환경 변수가 설정되지 않았습니다."
 fi
 
 # Fulcrum 바이너리 다운로드
@@ -113,8 +102,8 @@ rpcuser = ${USER_NAME}
 rpcpassword = ${RPC_PASSWORD}
 
 # 서버 설정
-tcp = 0.0.0.0:50001
-ssl = 0.0.0.0:50002
+tcp = 127.0.0.1:50001
+ssl = 127.0.0.1:50002
 
 # SSL 인증서 설정
 cert = ${FULCRUM_SSL_DIR}/cert.pem
