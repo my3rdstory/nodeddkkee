@@ -34,9 +34,7 @@ echo "Tor 제거 완료"
 # Fulcrum 관련 파일 제거
 echo "Fulcrum 서비스 중지 및 파일 제거 중..."
 sudo systemctl stop fulcrum
-cd $REAL_HOME/fulcrum
-# data 폴더를 제외한 모든 파일 제거
-find . -mindepth 1 -maxdepth 1 ! -name 'data' -exec rm -rf {} +
+rm -rf $REAL_HOME/fulcrum
 echo "Fulcrum 제거 완료"
 
 # 서비스 비활성화 및 데몬 리로드

@@ -79,15 +79,15 @@ else
     BITCOIN_SERVICE_EXISTS=false
 fi
 
-if sudo grep -q "HiddenServiceDir /var/lib/tor/fulcrum-service/" /etc/tor/torrc; then
-    log "Fulcrum Hidden Service 설정이 이미 존재합니다."
-    FULCRUM_SERVICE_EXISTS=true
+if sudo grep -q "HiddenServiceDir /var/lib/tor/electrs-service/" /etc/tor/torrc; then
+    log "Electrs Hidden Service 설정이 이미 존재합니다."
+    ELECTRS_SERVICE_EXISTS=true
 else
-    FULCRUM_SERVICE_EXISTS=false
+    ELECTRS_SERVICE_EXISTS=false
 fi
 
 # 사용자 확인
-if [ "$BITCOIN_SERVICE_EXISTS" = false ] || [ "$FULCRUM_SERVICE_EXISTS" = false ]; then
+if [ "$BITCOIN_SERVICE_EXISTS" = false ] || [ "$ELECTRS_SERVICE_EXISTS" = false ]; then
     if confirm "Tor 설정 파일을 수정하시겠습니까?"; then
         # Tor 설정 파일 수정
         log "Tor 설정 파일 수정 중..."
@@ -105,13 +105,12 @@ HiddenServicePort 8332 127.0.0.1:8332
 "
         fi
         
-        if [ "$FULCRUM_SERVICE_EXISTS" = false ]; then
+        if [ "$ELECTRS_SERVICE_EXISTS" = false ]; then
             TOR_CONFIG+="
-# Fulcrum Hidden Service
-HiddenServiceDir /var/lib/tor/fulcrum-service/
+# Electrs Hidden Service
+HiddenServiceDir /var/lib/tor/electrs-service/
 HiddenServiceVersion 3
 HiddenServicePort 50001 127.0.0.1:50001
-HiddenServicePort 50002 127.0.0.1:50002
 "
         fi
         
@@ -127,7 +126,7 @@ fi
 
 # Tor 디렉토리 권한 확인 및 설정
 log "Tor 디렉토리 권한 확인 중..."
-for DIR in "/var/lib/tor/bitcoin-service/" "/var/lib/tor/fulcrum-service/"; do
+for DIR in "/var/lib/tor/bitcoin-service/" "/var/lib/tor/electrs-service/"; do
     if [ ! -d "$DIR" ]; then
         sudo mkdir -p "$DIR" || log "디렉토리 생성 실패: $DIR"
         sudo chown debian-tor:debian-tor "$DIR" || log "권한 변경 실패: $DIR"
@@ -199,20 +198,20 @@ else
     log "경고: Bitcoin Core 설정 파일을 찾을 수 없습니다: $BITCOIN_CONF"
 fi
 
-# Fulcrum 서비스 재시작 (설치되어 있는 경우)
-if systemctl is-active --quiet fulcrum; then
-    log "Fulcrum 서비스 재시작 중..."
-    sudo systemctl restart fulcrum || log "Fulcrum 서비스 재시작에 실패했습니다."
+# Electrs 서비스 재시작 (설치되어 있는 경우)
+if systemctl is-active --quiet electrs; then
+    log "Electrs 서비스 재시작 중..."
+    sudo systemctl restart electrs || log "Electrs 서비스 재시작에 실패했습니다."
     
     # 서비스 재시작 확인
     sleep 5
-    if systemctl is-active --quiet fulcrum; then
-        log "Fulcrum 서비스가 성공적으로 재시작되었습니다."
+    if systemctl is-active --quiet electrs; then
+        log "Electrs 서비스가 성공적으로 재시작되었습니다."
     else
-        log "경고: Fulcrum 서비스 재시작 후 활성화되지 않았습니다."
+        log "경고: Electrs 서비스 재시작 후 활성화되지 않았습니다."
     fi
 else
-    log "Fulcrum 서비스가 실행 중이 아니거나 설치되어 있지 않습니다."
+    log "Electrs 서비스가 실행 중이 아니거나 설치되어 있지 않습니다."
 fi
 
 # Onion 주소 확인 및 표시
@@ -227,16 +226,16 @@ else
     log "경고: Bitcoin Core Onion 주소 파일을 찾을 수 없습니다."
 fi
 
-# Fulcrum Onion 주소
-if [ -f "/var/lib/tor/fulcrum-service/hostname" ]; then
-    FULCRUM_ONION=$(sudo cat /var/lib/tor/fulcrum-service/hostname)
-    log "Fulcrum Onion 주소: ${FULCRUM_ONION}"
+# Electrs Onion 주소
+if [ -f "/var/lib/tor/electrs-service/hostname" ]; then
+    ELECTRS_ONION=$(sudo cat /var/lib/tor/electrs-service/hostname)
+    log "Electrs Onion 주소: ${ELECTRS_ONION}"
 else
-    log "경고: Fulcrum Onion 주소 파일을 찾을 수 없습니다."
+    log "경고: Electrs Onion 주소 파일을 찾을 수 없습니다."
 fi
 
 log "Tor 설정이 완료되었습니다."
-log "이제 Tor 네트워크를 통해 Bitcoin Core와 Fulcrum에 접속할 수 있습니다."
+log "이제 Tor 네트워크를 통해 Bitcoin Core와 Electrs에 접속할 수 있습니다."
 log "로그 파일이 저장된 위치: $(pwd)/$LOG_FILE"
 
 # 토르 설정이 완료된 후 실행되는 부분
@@ -257,16 +256,14 @@ else
     NODE_PORT=8333
 fi
 
-# 풀크럼 접속용 토르 주소 가져오기
-if [ -f "/var/lib/tor/fulcrum-service/hostname" ]; then
-    FULCRUM_ONION_ADDRESS=$(sudo cat /var/lib/tor/fulcrum-service/hostname)
-    FULCRUM_RPC_PORT=50001  # 풀크럼 RPC 포트
-    FULCRUM_SSL_PORT=50002  # 풀크럼 SSL 포트
+# Electrs 접속용 토르 주소 가져오기
+if [ -f "/var/lib/tor/electrs-service/hostname" ]; then
+    ELECTRS_ONION_ADDRESS=$(sudo cat /var/lib/tor/electrs-service/hostname)
+    ELECTRS_PORT=50001  # Electrs 포트
 else
-    log "경고: 풀크럼 Onion 주소 파일을 찾을 수 없습니다."
-    FULCRUM_ONION_ADDRESS="주소를 찾을 수 없음"
-    FULCRUM_RPC_PORT=50001
-    FULCRUM_SSL_PORT=50002
+    log "경고: Electrs Onion 주소 파일을 찾을 수 없습니다."
+    ELECTRS_ONION_ADDRESS="주소를 찾을 수 없음"
+    ELECTRS_PORT=50001
 fi
 
 # JSON 형식으로 출력
@@ -276,15 +273,9 @@ cat > "${OUTPUT_FILE}" << EOF
     "onion_address": "${NODE_ONION_ADDRESS}",
     "port": ${NODE_PORT}
   },
-  "fulcrum": {
-    "rpc": {
-      "onion_address": "${FULCRUM_ONION_ADDRESS}",
-      "port": ${FULCRUM_RPC_PORT}
-    },
-    "ssl": {
-      "onion_address": "${FULCRUM_ONION_ADDRESS}",
-      "port": ${FULCRUM_SSL_PORT}
-    }
+  "electrs": {
+    "onion_address": "${ELECTRS_ONION_ADDRESS}",
+    "port": ${ELECTRS_PORT}
   }
 }
 EOF
@@ -294,15 +285,15 @@ log "토르 주소 정보가 ${OUTPUT_FILE} 파일에 저장되었습니다."
 # JSON 내용 출력
 cat "${OUTPUT_FILE}" || log "JSON 파일 출력 실패"
 
-# nodeddkkee_env.sh에서 FULCRUM_CONF_DIR 경로 가져오기
+# nodeddkkee_env.sh에서 ELECTRS_CONF_DIR 경로 가져오기
 source nodeddkkee_env.sh
 
-# fulcrum.conf 파일에 토르 주소 추가
-FULCRUM_CONF="${FULCRUM_CONF_DIR}/fulcrum.conf"
-if [ -f "$FULCRUM_CONF" ]; then
-    echo "tor_hostname=${FULCRUM_ONION_ADDRESS}" >> "$FULCRUM_CONF"
-    echo "tor_tcp_port=50001" >> "$FULCRUM_CONF"
-    log "Fulcrum 설정 파일에 Tor 주소를 추가했습니다."
+# electrs.toml 파일에 토르 주소 추가
+ELECTRS_CONF="${ELECTRS_CONF_DIR}/electrs.toml"
+if [ -f "$ELECTRS_CONF" ]; then
+    echo "tor_proxy = \"127.0.0.1:9050\"" >> "$ELECTRS_CONF"
+    echo "tor_hostname = \"${ELECTRS_ONION_ADDRESS}\"" >> "$ELECTRS_CONF"
+    log "Electrs 설정 파일에 Tor 주소를 추가했습니다."
 else
-    log "경고: Fulcrum 설정 파일을 찾을 수 없습니다: $FULCRUM_CONF"
+    log "경고: Electrs 설정 파일을 찾을 수 없습니다: $ELECTRS_CONF"
 fi 
