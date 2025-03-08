@@ -51,7 +51,7 @@ echo "노드딸깍이(Nodeddkkee) 설치 스크립트를 시작합니다..."
 # 각 스크립트 순서대로 실행
 run_script "0_check.sh" "시스템 확인 및 준비"
 run_script "1_node.sh" "Bitcoin Core 설치"
-run_script "2_fulcrum.sh" "Fulcrum 설치"
+run_script "2_electrs.sh" "Electrs 설치"
 run_script "3_tor.sh" "Tor 설정"
 
 echo "모든 설치 스크립트가 성공적으로 완료되었습니다!"

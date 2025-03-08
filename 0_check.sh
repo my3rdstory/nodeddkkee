@@ -55,7 +55,7 @@ update_system() {
     sudo apt update && sudo apt upgrade -y || error_exit "시스템 업데이트에 실패했습니다."
     
     echo "필요한 패키지 설치 중..."
-    sudo apt -y install git nano net-tools jq tor htop glances || error_exit "필요한 패키지 설치에 실패했습니다."
+    sudo apt -y install git nano net-tools jq tor htop glances build-essential pkg-config libc6-dev m4 g++-multilib autoconf libtool ncurses-dev unzip git python3 python3-pip cmake cargo clang libssl-dev || error_exit "필요한 패키지 설치에 실패했습니다."
 }
 
 # 다운로드 디렉토리 생성

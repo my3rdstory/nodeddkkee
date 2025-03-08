@@ -50,27 +50,40 @@ fi
 
 # Electrs 디렉토리 생성
 ELECTRS_DIR="/home/${USER_NAME}/electrs"
-ELECTRS_DATA_DIR="${ELECTRS_DIR}/data"
 ELECTRS_CONF_DIR="${ELECTRS_DIR}/config"
 ELECTRS_LOG_DIR="${ELECTRS_DIR}/logs"
 
 echo "Electrs 디렉토리 생성 중..."
-mkdir -p ${ELECTRS_DIR} ${ELECTRS_DATA_DIR} ${ELECTRS_CONF_DIR} ${ELECTRS_LOG_DIR} || error_exit "Electrs 디렉토리 생성에 실패했습니다."
+mkdir -p ${ELECTRS_DIR} ${ELECTRS_CONF_DIR} ${ELECTRS_LOG_DIR} || error_exit "Electrs 디렉토리 생성에 실패했습니다."
 
 # Electrs 소스 다운로드 및 빌드
 echo "Electrs 소스 다운로드 및 빌드 중..."
 cd ~/downloads || error_exit "다운로드 디렉토리로 이동할 수 없습니다."
-git clone https://github.com/romanz/electrs.git || error_exit "Electrs 소스 다운로드에 실패했습니다."
-cd electrs || error_exit "Electrs 디렉토리로 이동할 수 없습니다."
 
-# 최신 태그 확인 및 서명 검증
-git fetch --tags
-LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
-echo "최신 버전 ${LATEST_TAG} 검증 중..."
-git verify-tag ${LATEST_TAG} || error_exit "태그 서명 검증에 실패했습니다."
-git checkout ${LATEST_TAG} || error_exit "태그 체크아웃에 실패했습니다."
+# 빌드된 바이너리 확인
+if [ -f "electrs/target/release/electrs" ]; then
+    echo "이미 빌드된 Electrs 바이너리가 존재합니다. 빌드 과정을 건너뜁니다..."
+else
+    # 기존 electrs 디렉토리가 있으면 삭제
+    if [ -d "electrs" ]; then
+        echo "기존 electrs 디렉토리 삭제 중..."
+        rm -rf electrs
+    fi
 
-cargo build --release || error_exit "Electrs 빌드에 실패했습니다."
+    git clone https://github.com/romanz/electrs.git || error_exit "Electrs 소스 다운로드에 실패했습니다."
+    cd electrs || error_exit "Electrs 디렉토리로 이동할 수 없습니다."
+
+    # 최신 태그 확인 및 서명 검증
+    git fetch --tags
+    LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+    echo "최신 버전 ${LATEST_TAG} 검증 중..."
+    git verify-tag ${LATEST_TAG} || error_exit "태그 서명 검증에 실패했습니다."
+    git checkout ${LATEST_TAG} || error_exit "태그 체크아웃에 실패했습니다."
+
+    cargo build --release || error_exit "Electrs 빌드에 실패했습니다."
+fi
+
+cd ~/downloads/electrs || error_exit "Electrs 디렉토리로 이동할 수 없습니다."
 
 # 버전 확인
 echo "Electrs 버전 확인 중..."
@@ -80,27 +93,24 @@ echo "Electrs 버전 확인 중..."
 echo "Electrs 바이너리 설치 중..."
 sudo install -m 0755 -o root -g root -t /usr/local/bin target/release/electrs || error_exit "Electrs 바이너리 설치에 실패했습니다."
 
-# Electrs 설정 파일 생성
-echo "Electrs 설정 파일 생성 중..."
-cat > ${ELECTRS_CONF_DIR}/electrs.conf << EOF || error_exit "Electrs 설정 파일 생성에 실패했습니다."
-# Electrs 설정 파일
+# # Electrs 설정 파일 생성
+# echo "Electrs 설정 파일 생성 중..."
+# cat > ${ELECTRS_CONF_DIR}/electrs.conf << EOF || error_exit "Electrs 설정 파일 생성에 실패했습니다."
+# # Electrs 설정 파일
 
-# Bitcoin Core 연결 설정
-network = "bitcoin"
-daemon_dir = "/home/${USER_NAME}/.bitcoin"
-daemon_rpc_addr = "127.0.0.1:8332"
-daemon_p2p_addr = "127.0.0.1:8333"
+# # Bitcoin Core 연결 설정
+# network = "bitcoin"
+# daemon_dir = "/home/${USER_NAME}/.bitcoin"
+# daemon_rpc_addr = "127.0.0.1:8332"
+# daemon_p2p_addr = "127.0.0.1:8333"
 
-# 서버 설정
-electrum_rpc_addr = "127.0.0.1:50001"
-db_dir = "${ELECTRS_DATA_DIR}"
+# # 서버 설정
+# electrum_rpc_addr = "127.0.0.1:50001"
 
-# 인증 설정
-auth = "${USER_NAME}:${RPC_PASSWORD}"
+# # 인증 설정
+# auth = "${USER_NAME}:${RPC_PASSWORD}"
 
-# 로깅 설정
-log_filters = "INFO"
-EOF
+# EOF
 
 # 소유권 설정
 echo "Electrs 디렉토리 소유권 설정 중..."
@@ -109,19 +119,19 @@ sudo chown -R ${USER_NAME}:${USER_NAME} ${ELECTRS_DIR} || error_exit "Electrs �
 # Electrs 서비스 파일 생성
 echo "Electrs 서비스 파일 생성 중..."
 sudo tee /etc/systemd/system/electrs.service > /dev/null << EOF || error_exit "Electrs 서비스 파일 생성에 실패했습니다."
+
 [Unit]
 Description=Electrs
-After=bitcoind.service
-Requires=bitcoind.service
+After=electrs.service
 
 [Service]
 WorkingDirectory=${ELECTRS_DIR}
-ExecStart=/usr/local/bin/electrs --conf ${ELECTRS_CONF_DIR}/electrs.conf
+ExecStart=/usr/local/bin/electrs --log-filters INFO --db-dir ./db --electrum-rpc-addr="127.0.0.1:50001"
 User=${USER_NAME}
 Group=${USER_NAME}
 Type=simple
 KillMode=process
-TimeoutSec=180
+TimeoutSec=60
 Restart=always
 RestartSec=60
 Environment="RUST_BACKTRACE=1"

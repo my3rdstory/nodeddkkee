@@ -32,14 +32,25 @@ rm -rf $REAL_HOME/tor_info.json
 echo "Tor 제거 완료"
 
 # Fulcrum 관련 파일 제거
-echo "Fulcrum 서비스 중지 및 파일 제거 중..."
+#echo "Fulcrum 서비스 중지 및 파일 제거 중..."
 sudo systemctl stop fulcrum
-rm -rf $REAL_HOME/fulcrum
-echo "Fulcrum 제거 완료"
+#rm -rf $REAL_HOME/fulcrum
+#echo "Fulcrum 제거 완료"
+
+# Electrs 관련 파일 제거
+echo "Electrs 서비스 중지 및 파일 제거 중..."
+sudo systemctl stop electrs
+rm -rf $REAL_HOME/electrs/src
+rm -rf $REAL_HOME/electrs/.git
+rm -rf $REAL_HOME/electrs/.github
+rm -rf $REAL_HOME/electrs/doc
+rm -rf $REAL_HOME/electrs/contrib
+# data 폴더와 빌드된 파일 보존
+echo "Electrs 제거 완료 (데이터 폴더와 빌드된 파일 보존됨)"
 
 # 서비스 비활성화 및 데몬 리로드
 echo "서비스 비활성화 및 시스템 데몬 리로드 중..."
-sudo systemctl disable bitcoind tor fulcrum
+sudo systemctl disable bitcoind tor electrs fulcrum
 sudo systemctl daemon-reload
 echo "서비스 비활성화 완료"
 
