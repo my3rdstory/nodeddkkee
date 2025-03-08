@@ -1,12 +1,20 @@
 #!/bin/bash
 
-# 프로그램명: 노드딸깍이(Nodeddkkee) - Tor 설정
-# 작성자: DedSec
-# 엑스: https://x.com/_orangepillkr
-# 유튜브: https://www.youtube.com/@orangepillkr/
-# 스페셜땡쓰: 셀프카스타드님 https://florentine-porkpie-563.notion.site/2e905cab90ae4a979711ec40bbb85d64?v=7c329be91bd44a03928fcfa3ed4c3fe4
-# 라이선스: 없음
-# 주의: 저는 코딩 못합니다. 커서 조져서 대충 만든거에요. 제 오드로이드 H4 기기에서만 테스트했습니다. 다른 기기에서 동작을 보장하지 않습니다. 수정 요청하지 마시고 포크해서 마음껏 사용하세요. 
+# 1_core.sh에서 설정한 변수들을 가져오기 위한 환경 파일 생성
+if [ -f "./1_core.sh" ]; then
+    # 1_core.sh에서 변수 설정 부분만 추출
+    grep -E "^[A-Z_]+=.*$" ./1_core.sh > ./core_vars.env
+    source ./core_vars.env
+else
+    echo "오류: 1_core.sh 파일을 찾을 수 없습니다."
+    exit 1
+fi
+
+# 필수 변수 확인
+if [ -z "$USER_NAME" ] || [ -z "$USER_HOME" ]; then
+    echo "오류: 필수 변수가 설정되지 않았습니다."
+    exit 1
+fi
 
 # 오류 처리 함수 정의
 error_exit() {
@@ -21,13 +29,6 @@ LOG_FILE="${LOGS_DIR}/tor_setup_$(date +%Y%m%d_%H%M%S).log"
 log() {
     echo "$(date +"%Y-%m-%d %H:%M:%S") - $1" | tee -a "$LOG_FILE"
 }
-
-# 환경 변수 로드
-if [ -f "nodeddkkee_env.sh" ]; then
-    source nodeddkkee_env.sh
-else
-    error_exit "환경 변수 파일(nodeddkkee_env.sh)을 찾을 수 없습니다. 0_check.sh를 먼저 실행해주세요."
-fi
 
 # 스크립트 실행 시작 메시지
 log "Tor 설정 스크립트를 시작합니다..."
