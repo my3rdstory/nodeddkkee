@@ -199,7 +199,7 @@ fi
 
 # Tailscale IP 주소 확인
 log "Tailscale IP 주소 확인 중..."
-TAILSCALE_IP=$(sudo tailscale ip 2>/dev/null)
+TAILSCALE_IP=$(sudo tailscale ip 2>/dev/null | head -1)
 if [ -n "$TAILSCALE_IP" ]; then
     log "Tailscale IP 주소: ${TAILSCALE_IP}"
 else
