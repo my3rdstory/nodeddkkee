@@ -217,11 +217,11 @@ zmqpubhashblock=tcp://0.0.0.0:28334
 whitelist=127.0.0.1
 
 # 토르 설정
-proxy=127.0.0.1:9050
-listen=1
-bind=127.0.0.1
-onion=127.0.0.1:9050
-listenonion=1
+# proxy=127.0.0.1:9050
+# listen=1
+# bind=127.0.0.1
+# onion=127.0.0.1:9050
+# listenonion=1
 
 # 일반 인터넷 연결 허용
 addnode=mainnet.bitcoin.ninja
