@@ -202,6 +202,31 @@ log "Tailscale IP 주소 확인 중..."
 TAILSCALE_IP=$(sudo tailscale ip 2>/dev/null | head -1)
 if [ -n "$TAILSCALE_IP" ]; then
     log "Tailscale IP 주소: ${TAILSCALE_IP}"
+    
+    # bitcoin.conf 파일 경로 설정
+    BITCOIN_CONF="/home/${USER_NAME}/.bitcoin/bitcoin.conf"
+    
+    # bitcoin.conf 파일이 존재하는지 확인
+    if [ -f "$BITCOIN_CONF" ]; then
+        log "bitcoin.conf 파일을 수정합니다..."
+        
+        # rpcallowip 설정이 이미 있는지 확인
+        if ! grep -q "rpcallowip=${TAILSCALE_IP}" "$BITCOIN_CONF"; then
+            # 파일 끝에 테일스케일 관련 설정 추가
+            cat << EOF | sudo tee -a "$BITCOIN_CONF" > /dev/null
+rpcallowip=${TAILSCALE_IP}
+bind=${TAILSCALE_IP}
+onlynet=ipv4
+onlynet=ipv6
+onlynet=tailscale
+EOF
+            log "bitcoin.conf에 Tailscale 관련 설정이 추가되었습니다."
+        else
+            log "bitcoin.conf에 이미 Tailscale IP가 설정되어 있습니다."
+        fi
+    else
+        log "경고: bitcoin.conf 파일을 찾을 수 없습니다."
+    fi
 else
     log "경고: Tailscale IP 주소를 확인할 수 없습니다."
 fi
@@ -257,3 +282,5 @@ log "Bitcoin Core 접속 정보: ${TAILSCALE_IP}:${BITCOIN_PORT}"
 log "Electrs 접속 정보: ${TAILSCALE_IP}:${ELECTRS_PORT}"
 log "로그 파일이 저장된 위치: $(pwd)/$LOG_FILE"
 log "접속 정보 파일이 저장된 위치: $(pwd)/$TS_INFO_FILE"
+
+

@@ -180,13 +180,17 @@ EOF
                 log "Bitcoin Core 서비스 재시작 중..."
                 sudo systemctl restart bitcoind || error_exit "Bitcoin Core 서비스 재시작에 실패했습니다."
                 
-                # 서비스 재시작 확인
-                sleep 5
-                if systemctl is-active --quiet bitcoind; then
-                    log "Bitcoin Core 서비스가 성공적으로 재시작되었습니다."
-                else
-                    log "경고: Bitcoin Core 서비스 재시작 후 활성화되지 않았습니다."
-                fi
+                # 서비스 재시작 확인 (최대 10번 시도)
+                for attempt in {1..5}; do
+                    log "Bitcoin Core 서비스 상태 확인 중... (시도 $attempt/10)"
+                    sleep 5
+                    if systemctl is-active --quiet bitcoind; then
+                        log "Bitcoin Core 서비스가 성공적으로 재시작되었습니다."
+                        break
+                    elif [ $attempt -eq 10 ]; then
+                        log "경고: Bitcoin Core 서비스가 10번의 시도 후에도 활성화되지 않았습니다."
+                    fi
+                done
             else
                 log "Bitcoin Core 서비스가 실행 중이 아닙니다. 재시작하지 않습니다."
             fi
