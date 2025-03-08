@@ -4,7 +4,9 @@
 # 작성자: DedSec
 # 엑스: https://x.com/_orangepillkr
 # 유튜브: https://www.youtube.com/@orangepillkr/
+# 스페셜땡쓰: 셀프카스타드님 https://florentine-porkpie-563.notion.site/2e905cab90ae4a979711ec40bbb85d64?v=7c329be91bd44a03928fcfa3ed4c3fe4
 # 라이선스: 없음
+# 주의: 저는 코딩 못합니다. 커서 조져서 대충 만든거에요. 제 오드로이드 H4 기기에서만 테스트했습니다. 다른 기기에서 동작을 보장하지 않습니다. 수정 요청하지 마시고 포크해서 마음껏 사용하세요. 
 
 # 오류 처리 함수 정의
 error_exit() {

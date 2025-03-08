@@ -53,7 +53,7 @@ run_script "0_check.sh" "시스템 확인 및 준비"
 run_script "1_node.sh" "Bitcoin Core 설치"
 run_script "2_electrs.sh" "Electrs 설치"
 run_script "3_tailscale.sh" "Tailscale 설치 및 설정"
-run_script "final.sh" "최종 설정 및 마무리"
+run_script "4_final.sh" "최종 설정 및 마무리"
 
 echo "모든 설치 스크립트가 성공적으로 완료되었습니다!"
 echo "노드딸깍이(Nodeddkkee) 설치가 완료되었습니다."

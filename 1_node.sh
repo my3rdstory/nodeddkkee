@@ -172,6 +172,10 @@ if [ "$(whoami)" = "root" ]; then
 server=1
 txindex=1
 daemon=1
+mempoolfullrbf=1
+mempoolexpiry=336
+maxmempool=500
+
 rpcport=8332
 rpcbind=0.0.0.0
 rpcallowip=127.0.0.1
@@ -196,6 +200,10 @@ else
 server=1
 txindex=1
 daemon=1
+mempoolfullrbf=1
+mempoolexpiry=336
+maxmempool=500
+
 rpcport=8332
 rpcbind=0.0.0.0
 rpcallowip=127.0.0.1
