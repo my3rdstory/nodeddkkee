@@ -23,17 +23,17 @@ sudo apt autoremove -y
 echo "Bitcoin 제거 완료"
 
 # Tor 관련 파일 제거
-echo "Tor 서비스 중지 및 파일 제거 중..."
-sudo systemctl stop tor
-sudo apt remove --purge tor -y
-sudo apt autoremove -y
-rm -rf $REAL_HOME/.tor /var/lib/tor /etc/tor
-rm -rf $REAL_HOME/tor_info.json
-echo "Tor 제거 완료"
+# echo "Tor 서비스 중지 및 파일 제거 중..."
+# sudo systemctl stop tor
+# sudo apt remove --purge tor -y
+# sudo apt autoremove -y
+# rm -rf $REAL_HOME/.tor /var/lib/tor /etc/tor
+# rm -rf $REAL_HOME/tor_info.json
+# echo "Tor 제거 완료"
 
 # Fulcrum 관련 파일 제거
 #echo "Fulcrum 서비스 중지 및 파일 제거 중..."
-sudo systemctl stop fulcrum
+# sudo systemctl stop fulcrum
 #rm -rf $REAL_HOME/fulcrum
 #echo "Fulcrum 제거 완료"
 
@@ -50,9 +50,38 @@ echo "Electrs 제거 완료 (데이터 폴더와 빌드된 파일 보존됨)"
 
 # 서비스 비활성화 및 데몬 리로드
 echo "서비스 비활성화 및 시스템 데몬 리로드 중..."
-sudo systemctl disable bitcoind tor electrs fulcrum
+
+# 테일스케일 서비스 중지
+echo "테일스케일 서비스 중지 중..."
+sudo systemctl stop tailscaled
+echo "테일스케일 서비스 중지 완료"
+
+sudo systemctl disable bitcoind tor electrs fulcrum tailscaled
 sudo systemctl daemon-reload
 echo "서비스 비활성화 완료"
+
+# 모든 서비스가 중지되었는지 확인
+echo "모든 서비스가 중지되었는지 확인 중..."
+SERVICES=("bitcoind" "tor" "electrs" "fulcrum" "tailscaled")
+MAX_ATTEMPTS=10
+
+for service in "${SERVICES[@]}"; do
+    attempts=0
+    while systemctl is-active --quiet $service 2>/dev/null && [ $attempts -lt $MAX_ATTEMPTS ]; do
+        echo "$service 서비스가 아직 실행 중입니다. 중지 시도 중... (시도 $((attempts+1))/$MAX_ATTEMPTS)"
+        sudo systemctl stop $service
+        sleep 2
+        ((attempts++))
+    done
+    
+    if systemctl is-active --quiet $service 2>/dev/null; then
+        echo "경고: $service 서비스를 $MAX_ATTEMPTS회 시도 후에도 중지할 수 없습니다."
+    else
+        echo "$service 서비스가 성공적으로 중지되었습니다."
+    fi
+done
+
+echo "서비스 중지 확인 완료"
 
 echo "===== 모든 제거 작업이 완료되었습니다 ====="
 
