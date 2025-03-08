@@ -211,156 +211,6 @@ log "Bitcoin Core 및 Electrs 서비스 포트 확인 중..."
 BITCOIN_PORT=8332
 ELECTRS_PORT=50001
 
-# 결과를 저장할 파일 경로 설정
-OUTPUT_FILE="./tailscale_info.json"
-
-# JSON 형식으로 출력
-cat > "${OUTPUT_FILE}" << EOF
-{
-  "tailscale": {
-    "ip_address": "${TAILSCALE_IP}",
-    "bitcoin_port": ${BITCOIN_PORT},
-    "electrs_port": ${ELECTRS_PORT}
-  }
-}
-EOF
-
-log "Tailscale 정보가 ${OUTPUT_FILE} 파일에 저장되었습니다."
-
-# JSON 내용 출력
-cat "${OUTPUT_FILE}" || log "JSON 파일 출력 실패"
-
-# Bitcoin Core 설정 파일 수정
-log "Bitcoin Core 설정 파일 확인 중..."
-BITCOIN_CONF="/home/${USER_NAME}/.bitcoin/bitcoin.conf"
-if [ -f "$BITCOIN_CONF" ]; then
-    # 이미 rpcallowip 설정이 있는지 확인
-    if grep -q "rpcallowip=10.0.0.0/8" "$BITCOIN_CONF"; then
-        log "Bitcoin Core 설정 파일에 이미 Tailscale 네트워크 허용 설정이 있습니다."
-    else
-        # 사용자 확인
-        if confirm "Bitcoin Core 설정 파일에 Tailscale 네트워크 허용 설정을 추가하시겠습니까?"; then
-            # 설정 추가
-            cat >> "$BITCOIN_CONF" << EOF || error_exit "Bitcoin Core 설정 파일 수정에 실패했습니다."
-
-# Tailscale 네트워크 허용 설정
-rpcallowip=10.0.0.0/8
-rpcbind=0.0.0.0
-EOF
-            log "Bitcoin Core 설정 파일에 Tailscale 네트워크 허용 설정을 추가했습니다."
-            
-            # Bitcoin Core 서비스 재시작
-            if systemctl is-active --quiet bitcoind; then
-                log "Bitcoin Core 서비스 재시작 중..."
-                sudo systemctl restart bitcoind || error_exit "Bitcoin Core 서비스 재시작에 실패했습니다."
-                
-                # 서비스 재시작 확인
-                sleep 5
-                if systemctl is-active --quiet bitcoind; then
-                    log "Bitcoin Core 서비스가 성공적으로 재시작되었습니다."
-                else
-                    log "경고: Bitcoin Core 서비스 재시작 후 활성화되지 않았습니다."
-                fi
-            else
-                log "Bitcoin Core 서비스가 실행 중이 아닙니다. 재시작하지 않습니다."
-            fi
-        else
-            log "사용자가 Bitcoin Core 설정 파일 수정을 취소했습니다."
-        fi
-    fi
-else
-    log "경고: Bitcoin Core 설정 파일을 찾을 수 없습니다: $BITCOIN_CONF"
-fi
-
-# Electrs 설정 파일 수정
-log "Electrs 설정 파일 확인 중..."
-source nodeddkkee_env.sh
-ELECTRS_CONF="${ELECTRS_CONF_DIR}/electrs.toml"
-if [ -f "$ELECTRS_CONF" ]; then
-    # 이미 bind_addr 설정이 있는지 확인
-    if grep -q "bind_addr = \"0.0.0.0:50001\"" "$ELECTRS_CONF"; then
-        log "Electrs 설정 파일에 이미 모든 인터페이스 바인딩 설정이 있습니다."
-    else
-        # 사용자 확인
-        if confirm "Electrs 설정 파일에 모든 인터페이스 바인딩 설정을 추가하시겠습니까?"; then
-            # 설정 추가
-            echo "bind_addr = \"0.0.0.0:50001\"" >> "$ELECTRS_CONF" || error_exit "Electrs 설정 파일 수정에 실패했습니다."
-            log "Electrs 설정 파일에 모든 인터페이스 바인딩 설정을 추가했습니다."
-            
-            # Electrs 서비스 재시작
-            if systemctl is-active --quiet electrs; then
-                log "Electrs 서비스 재시작 중..."
-                sudo systemctl restart electrs || log "Electrs 서비스 재시작에 실패했습니다."
-                
-                # 서비스 재시작 확인
-                sleep 5
-                if systemctl is-active --quiet electrs; then
-                    log "Electrs 서비스가 성공적으로 재시작되었습니다."
-                else
-                    log "경고: Electrs 서비스 재시작 후 활성화되지 않았습니다."
-                fi
-            else
-                log "Electrs 서비스가 실행 중이 아니거나 설치되어 있지 않습니다."
-            fi
-        else
-            log "사용자가 Electrs 설정 파일 수정을 취소했습니다."
-        fi
-    fi
-else
-    log "경고: Electrs 설정 파일을 찾을 수 없습니다: $ELECTRS_CONF"
-fi
-
-# 테일스케일 접속 확인
-log "Tailscale 접속 확인 중..."
-TAILSCALE_PING_RESULT=$(ping -c 3 ${TAILSCALE_IP} 2>&1)
-if echo "$TAILSCALE_PING_RESULT" | grep -q "bytes from"; then
-    log "Tailscale 접속 확인 성공: ${TAILSCALE_IP}에 접속할 수 있습니다."
-    TAILSCALE_CONNECTED=true
-else
-    log "경고: Tailscale 접속 확인 실패: ${TAILSCALE_IP}에 접속할 수 없습니다."
-    TAILSCALE_CONNECTED=false
-fi
-
-# Bitcoin Core 접속 확인
-log "Bitcoin Core 접속 확인 중..."
-if command -v curl &> /dev/null && [ -f "$BITCOIN_CONF" ]; then
-    RPC_USER=$(grep -oP "rpcuser=\K.*" "$BITCOIN_CONF" | head -1)
-    RPC_PASS=$(grep -oP "rpcpassword=\K.*" "$BITCOIN_CONF" | head -1)
-    
-    if [ -n "$RPC_USER" ] && [ -n "$RPC_PASS" ]; then
-        BITCOIN_TEST_RESULT=$(curl --silent --user "${RPC_USER}:${RPC_PASS}" --data-binary '{"jsonrpc":"1.0","method":"getblockchaininfo","params":[],"id":1}' -H 'content-type: text/plain;' http://${TAILSCALE_IP}:${BITCOIN_PORT}/ 2>&1)
-        
-        if echo "$BITCOIN_TEST_RESULT" | grep -q "blocks"; then
-            log "Bitcoin Core 접속 확인 성공: ${TAILSCALE_IP}:${BITCOIN_PORT}에 접속할 수 있습니다."
-            BITCOIN_CONNECTED=true
-        else
-            log "경고: Bitcoin Core 접속 확인 실패: ${TAILSCALE_IP}:${BITCOIN_PORT}에 접속할 수 없습니다."
-            BITCOIN_CONNECTED=false
-        fi
-    else
-        log "경고: Bitcoin Core RPC 사용자 정보를 찾을 수 없습니다."
-        BITCOIN_CONNECTED=false
-    fi
-else
-    log "경고: curl 명령어를 찾을 수 없거나 Bitcoin Core 설정 파일이 없습니다."
-    BITCOIN_CONNECTED=false
-fi
-
-# Electrs 접속 확인
-log "Electrs 접속 확인 중..."
-if command -v nc &> /dev/null; then
-    if nc -z -w 5 ${TAILSCALE_IP} ${ELECTRS_PORT}; then
-        log "Electrs 접속 확인 성공: ${TAILSCALE_IP}:${ELECTRS_PORT}에 접속할 수 있습니다."
-        ELECTRS_CONNECTED=true
-    else
-        log "경고: Electrs 접속 확인 실패: ${TAILSCALE_IP}:${ELECTRS_PORT}에 접속할 수 없습니다."
-        ELECTRS_CONNECTED=false
-    fi
-else
-    log "경고: nc 명령어를 찾을 수 없습니다."
-    ELECTRS_CONNECTED=false
-fi
-
 # 호스트명 가져오기
 HOSTNAME=$(hostname)
 
@@ -368,12 +218,14 @@ HOSTNAME=$(hostname)
 TS_INFO_FILE="./ts_info.json"
 cat > "${TS_INFO_FILE}" << EOF
 {
-  "hostname": "${HOSTNAME}",
   "tailscale": {
     "ip_address": "${TAILSCALE_IP}",
+    "bitcoin_port": ${BITCOIN_PORT},
+    "electrs_port": ${ELECTRS_PORT},
     "connected": ${TAILSCALE_CONNECTED},
     "timestamp": "$(date +"%Y-%m-%d %H:%M:%S")"
   },
+  "hostname": "${HOSTNAME}",
   "services": {
     "bitcoin_core": {
       "port": ${BITCOIN_PORT},
