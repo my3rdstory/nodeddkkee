@@ -34,7 +34,13 @@ ssh mybtc@192.168.1.3
 - 동작 절차는 모두 쉘스크립트로 작성되어 있으므로 별도의 설치 프로그램 없이 바로 실행할 수 있습니다.
 
 ```bash
-wget https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/auto.sh https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/0_check.sh https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/1_node.sh https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/2_fulcrum.sh https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/3_tor.sh https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/del.sh https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/nodeddkkee_env.sh 
+wget https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/auto.sh \
+     https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/0_check.sh \
+     https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/1_node.sh \
+     https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/2_electrs.sh \
+     https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/3_tor.sh \
+     https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/del.sh \
+     https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/nodeddkkee_env.sh 
 ```
 
 3. 다운로드 후 아래 명령어로 실행합니다. 
@@ -50,7 +56,7 @@ sudo bash auto.sh
 
 - 가장 먼저 설치 환경을 체크합니다.
 - 비트코인 코어 노드를 설치합니다.
-- 풀크럼 서버를 설치합니다.
+- 일렉트럼 서버를 설치합니다.
 - 토르를 설치하고, 토르 접속 정보를 파일로 생성합니다.
 
 ## 기능
@@ -79,20 +85,30 @@ bitcoin-cli getpeerinfo
 # 코어 블록 다운로드 로그 확인
 tail -f ~/.bitcoin/debug.log
 
-# 풀크럼 로그 실시간 확인
-sudo journalctl -fu fulcrum.service
+# 일렉트럼 최근 5분 로그 확인
+sudo journalctl -u electrs.service --since="-5 minutes"
 
 # 토르 정보 확인
 nano tor_info.json
+
+# 코어 인바운드/아웃바운드 현황 확인
+bitcoin-cli getpeerinfo | jq '{inbound:map(select(.inbound==true)) | length, outbound:map(select(.inbound==false)) | length}'
+
+# 노드의 기기 현황 확인 - glances 사용
+glances
+
+# 노드의 기기 현황 확인 - htop 사용
+htop
+
 ```
-2. del.sh 실행하면 설치한 모든 소프트웨어와 등록했던 설정이 지워집니다. 단, .bitcoin과 fulcrum_db 디렉토리는 남겨둡니다.
+2. del.sh 실행하면 동기화한 타임체인 전체와 일렉트럼 데이터베이스 등 재설치 필요 없는 것들은 삭제합니다.
 3. 실행 중 멈췄다면 auto.sh를 다시 실행해 보세요.
-4. 그래도 안된다면 에러 메시지 보면서 스스로 대응하세요.
+4. 그래도 안된다면 에러 메시지 보면서 스스로 대응하셔야 합니다.
 5. 상세한 내용은 맨 아래 스페셜땡쓰 링크에서 확인하세요.
 
 ## 토르 네트워크 연결
 스크립트는 토르 네트워크를 통한 익명 연결을 자동으로 설정합니다:
-- 아웃바운드 연결: 일반 인터넷 사용 (직접 연결)
+- 아웃바운드 연결: 일반 인터넷 사용
 - 인바운드 연결: 토르 네트워크를 통해서만 허용
 - 토르 히든 서비스 주소를 통해 원격에서 노드에 접속 가능
 
