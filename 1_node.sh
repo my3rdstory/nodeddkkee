@@ -331,8 +331,8 @@ while [ $ATTEMPT -le $MAX_ATTEMPTS ] && [ "$INFO_RETRIEVED" = "false" ]; do
             
             if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
                 # 대기 시간 증가
-                echo "3초 후 다시 시도합니다..."
-                sleep 3
+                echo "5초 후 다시 시도합니다..."
+                sleep 5
             fi
             ATTEMPT=$((ATTEMPT+1))
         fi

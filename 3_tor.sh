@@ -249,11 +249,11 @@ OUTPUT_FILE="./tor_info.json"
 # 노드 접속용 토르 주소 가져오기
 if [ -f "/var/lib/tor/bitcoin-service/hostname" ]; then
     NODE_ONION_ADDRESS=$(sudo cat /var/lib/tor/bitcoin-service/hostname)
-    NODE_PORT=8333  # 비트코인 노드의 기본 포트
+    NODE_PORT=8332
 else
     log "경고: 비트코인 노드 Onion 주소 파일을 찾을 수 없습니다."
     NODE_ONION_ADDRESS="주소를 찾을 수 없음"
-    NODE_PORT=8333
+    NODE_PORT=8332
 fi
 
 # Electrs 접속용 토르 주소 가져오기

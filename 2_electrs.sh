@@ -122,7 +122,8 @@ sudo tee /etc/systemd/system/electrs.service > /dev/null << EOF || error_exit "E
 
 [Unit]
 Description=Electrs
-After=electrs.service
+After=bitcoind.service
+Requires=bitcoind.service
 
 [Service]
 WorkingDirectory=${ELECTRS_DIR}
@@ -147,11 +148,47 @@ EOF
 # 서비스 활성화
 echo "Electrs 서비스 활성화 중..."
 sudo systemctl daemon-reload || error_exit "systemd 데몬 리로드에 실패했습니다."
+
+# 기존 서비스 중지
+echo "기존 Electrs 서비스 중지 중..."
+if systemctl is-active --quiet electrs; then
+    sudo systemctl stop electrs || error_exit "기존 Electrs 서비스 중지에 실패했습니다."
+    sleep 5  # 서비스가 완전히 중지될 때까지 대기
+fi
+
+# 포트 사용 확인
+if netstat -tuln | grep -q ":50001"; then
+    error_exit "포트 50001이 이미 사용 중입니다. 다른 프로세스를 확인해주세요."
+fi
+
 sudo systemctl enable electrs || error_exit "Electrs 서비스 활성화에 실패했습니다."
 
 # 서비스 시작
 echo "Electrs 서비스 시작 중..."
-sudo systemctl start electrs || error_exit "Electrs 서비스 시작에 실패했습니다."
+MAX_RETRIES=10
+RETRY_COUNT=0
+
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    sudo systemctl start electrs
+    sleep 5  # 서비스가 시작되는데 필요한 시간 대기
+    
+    # 서비스 상태 확인
+    if sudo systemctl is-active --quiet electrs && \
+       sudo systemctl status electrs --no-pager | grep -q "Active: active (running)" && \
+       netstat -tuln | grep -q ":50001"; then
+        echo "Electrs 서비스가 성공적으로 시작되었습니다."
+        break
+    else
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+            error_exit "Electrs 서비스 시작에 실패했습니다. 최대 재시도 횟수($MAX_RETRIES)에 도달했습니다."
+        fi
+        echo "Electrs 서비스 시작 실패. ${RETRY_COUNT}번째 재시도 중... (최대 ${MAX_RETRIES}회)"
+        echo "실패 원인 확인을 위한 로그:"
+        sudo journalctl -u electrs -n 5 --no-pager
+        sleep 5
+    fi
+done
 
 # 프로세스 상태 확인
 echo "Electrs 프로세스 상태 확인 중..."
