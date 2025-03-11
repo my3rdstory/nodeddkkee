@@ -202,6 +202,7 @@ db_dir = "${USER_HOME}/.electrs/db"
 cookie = "${USER_HOME}/.bitcoin/.cookie"
 tls_cert = "${USER_HOME}/.electrs/tls/electrs.crt"
 tls_key = "${USER_HOME}/.electrs/tls/electrs.key"
+electrum_tls = true
 EOF
 
 # 권한 설정
