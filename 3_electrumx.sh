@@ -49,11 +49,11 @@ fi
 
 # RPC 인증 정보 추출
 echo "RPC 정보 읽는 중..."
-RPC_USER=$(su - ${USER_NAME} -c "grep -E '^rpcuser=' '$BITCOIN_CONF' | cut -d'=' -f2")
-RPC_PASSWORD=$(su - ${USER_NAME} -c "grep -E '^rpcpassword=' '$BITCOIN_CONF' | cut -d'=' -f2")
+RPC_USER="${USER_NAME}"
+RPC_PASSWORD="bitcoin"
 
 if [ -z "$RPC_USER" ] || [ -z "$RPC_PASSWORD" ]; then
-    error_exit "Bitcoin Core RPC 정보를 찾을 수 없습니다. bitcoin.conf 파일을 확인해주세요."
+    error_exit "Bitcoin Core RPC 정보를 찾을 수 없습니다."
 fi
 
 # 방화벽 설정 및 확인
