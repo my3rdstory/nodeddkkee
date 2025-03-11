@@ -99,11 +99,28 @@ fi
 # 필수 패키지 설치
 echo "필수 패키지 설치 중..."
 apt-get update
-apt-get install -y clang cmake build-essential cargo git curl lsof || error_exit "패키지 설치 실패"
+apt-get install -y clang cmake build-essential cargo git curl lsof openssl || error_exit "패키지 설치 실패"
 
 # 백업 디렉토리 생성
 mkdir -p "${ELECTRS_BACKUP_DIR}"
 chown -R ${USER_NAME}:${USER_NAME} "${ELECTRS_BACKUP_DIR}"
+
+# TLS 인증서 디렉토리 생성 및 설정
+echo "TLS 인증서 생성 중..."
+TLS_DIR="${USER_HOME}/.electrs/tls"
+mkdir -p "$TLS_DIR"
+
+# 자동으로 인증서 생성
+openssl req -newkey rsa:2048 -nodes \
+    -keyout "${TLS_DIR}/electrs.key" \
+    -x509 -days 365 \
+    -out "${TLS_DIR}/electrs.crt" \
+    -subj "/C=KR/ST=Seoul/L=Seoul/O=Electrs/CN=localhost"
+
+# TLS 파일 권한 설정
+chown -R ${USER_NAME}:${USER_NAME} "$TLS_DIR"
+chmod 600 "${TLS_DIR}/electrs.key"
+chmod 644 "${TLS_DIR}/electrs.crt"
 
 # 기존 빌드 확인
 NEED_BUILD=true
@@ -168,6 +185,13 @@ fi
 # 설정 파일 생성
 echo "Electrs 설정 파일 생성 중..."
 mkdir -p "${USER_HOME}/.electrs"
+
+# 기존 설정 파일 제거
+if [ -f "${USER_HOME}/.electrs/config.toml" ]; then
+    echo "기존 config.toml 파일 제거 중..."
+    rm -f "${USER_HOME}/.electrs/config.toml"
+fi
+
 cat > "${USER_HOME}/.electrs/config.toml" << EOF
 network = "bitcoin"
 daemon_dir = "${USER_HOME}/.bitcoin"
@@ -176,12 +200,25 @@ daemon_p2p_addr = "127.0.0.1:8333"
 electrum_rpc_addr = "0.0.0.0:50001"
 db_dir = "${USER_HOME}/.electrs/db"
 cookie = "${USER_HOME}/.bitcoin/.cookie"
+tls_cert = "${USER_HOME}/.electrs/tls/electrs.crt"
+tls_key = "${USER_HOME}/.electrs/tls/electrs.key"
 EOF
 
 # 권한 설정
 chown -R ${USER_NAME}:${USER_NAME} "${USER_HOME}/.electrs"
 chmod 750 "${USER_HOME}/.electrs"
 chmod 640 "${USER_HOME}/.electrs/config.toml"
+
+# 기존 서비스 파일 제거
+if [ -f "/etc/systemd/system/electrs.service" ]; then
+    echo "기존 electrs 서비스 중지 및 제거 중..."
+    systemctl stop electrs
+    systemctl disable electrs
+    sleep 3
+    rm -f "/etc/systemd/system/electrs.service"
+    systemctl daemon-reload
+    systemctl reset-failed
+fi
 
 # systemd 서비스 파일 생성
 echo "systemd 서비스 파일 생성 중..."
@@ -221,22 +258,6 @@ systemctl enable electrs
 systemctl start electrs
 
 # 서비스 및 포트 상태 확인
-echo "서비스 및 포트 상태 확인 중..."
-MAX_ATTEMPTS=10
-ATTEMPT=1
-SERVICE_STARTED=false
-
-while [ $ATTEMPT -le $MAX_ATTEMPTS ] && [ "$SERVICE_STARTED" = "false" ]; do
-    if systemctl is-active --quiet electrs && nc -zv localhost 50001 2>/dev/null; then
-        echo "Electrs 서비스가 성공적으로 시작되었고 포트 50001이 열렸습니다."
-        SERVICE_STARTED=true
-    else
-        echo "시도 $ATTEMPT/$MAX_ATTEMPTS: 서비스 시작 및 포트 열림 대기 중..."
-        sleep 10
-        ATTEMPT=$((ATTEMPT+1))
-    fi
-done
-
 if [ "$SERVICE_STARTED" = "false" ]; then
     echo "서비스 상태:"
     systemctl status electrs
