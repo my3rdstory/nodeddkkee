@@ -169,6 +169,34 @@ if [ "$NEED_BUILD" = true ]; then
     chown ${USER_NAME}:${USER_NAME} "$BACKUP_BINARY"
 fi
 
+# 설정 파일 디렉토리 생성
+mkdir -p "${USER_HOME}/.electrs"
+cat > "${USER_HOME}/.electrs/config.toml" << EOF
+# 데이터베이스 설정
+db_dir = "${USER_HOME}/.electrs/db"
+
+# 비트코인 데몬 설정
+daemon_dir = "${USER_HOME}/.bitcoin"
+daemon_rpc_addr = "127.0.0.1:8332"
+daemon_p2p_addr = "127.0.0.1:8333"
+cookie_file = "${USER_HOME}/.bitcoin/.cookie"
+
+# 일렉트럼 서버 설정
+electrum_rpc_addr = "0.0.0.0:50001"
+log_filters = "INFO"
+network = "bitcoin"
+
+# JSON-RPC 가져오기 설정
+jsonrpc_import = true
+
+# 시스템 설정
+index_batch_size = 10
+index_lookup_limit = 100
+server_banner = "Welcome to Electrs"
+wait_duration_secs = 10
+EOF
+chown -R ${USER_NAME}:${USER_NAME} "${USER_HOME}/.electrs"
+
 # 기존 서비스 파일 제거
 if [ -f "/etc/systemd/system/electrs.service" ]; then
     echo "기존 electrs 서비스 중지 및 제거 중..."
@@ -191,15 +219,7 @@ Requires=bitcoind.service
 [Service]
 WorkingDirectory=/home/${USER_NAME}/electrs
 Environment="RUST_BACKTRACE=1"
-ExecStart=${ELECTRS_DIR}/target/release/electrs \
-    --log-filters INFO \
-    --db-dir ${USER_HOME}/.electrs/db \
-    --daemon-dir ${USER_HOME}/.bitcoin \
-    --daemon-rpc-addr 127.0.0.1:8332 \
-    --daemon-p2p-addr 127.0.0.1:8333 \
-    --electrum-rpc-addr 0.0.0.0:50001 \
-    --cookie-file ${USER_HOME}/.bitcoin/.cookie \
-    --network bitcoin
+ExecStart=${ELECTRS_DIR}/target/release/electrs --conf ${USER_HOME}/.electrs/config.toml
 User=${USER_NAME}
 Group=${USER_NAME}
 Type=simple
