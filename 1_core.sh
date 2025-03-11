@@ -51,10 +51,15 @@ elif pgrep bitcoind > /dev/null; then
 fi
 
 # .bitcoin 디렉토리 정리
-echo ".bitcoin 디렉토리 정리 중..."
+# echo ".bitcoin 디렉토리 정리 중..."
+# if [ -d "${USER_HOME}/.bitcoin" ]; then
+#     rm -rf ${USER_HOME}/.bitcoin
+#     echo ".bitcoin 디렉토리가 삭제되었습니다."
+# fi
+
+# .bitcoin 디렉토리 존재 여부 확인
 if [ -d "${USER_HOME}/.bitcoin" ]; then
-    rm -rf ${USER_HOME}/.bitcoin
-    echo ".bitcoin 디렉토리가 삭제되었습니다."
+    echo ".bitcoin 디렉토리가 이미 존재합니다. 기존 데이터를 보존합니다."
 fi
 
 # downloads 디렉토리 존재 여부 확인 및 생성

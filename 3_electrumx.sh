@@ -40,26 +40,42 @@ if ! systemctl is-active --quiet bitcoind; then
     error_exit "bitcoind가 실행 중이어야 합니다. 비트코인 노드를 먼저 설정하세요."
 fi
 
+# Bitcoin Core RPC 정보 확인
+echo "Bitcoin Core RPC 정보 확인 중..."
+BITCOIN_CONF="${USER_HOME}/.bitcoin/bitcoin.conf"
+if [ ! -f "$BITCOIN_CONF" ]; then
+    error_exit "Bitcoin Core 설정 파일을 찾을 수 없습니다: $BITCOIN_CONF"
+fi
+
+# RPC 인증 정보 추출
+echo "RPC 정보 읽는 중..."
+RPC_USER=$(su - ${USER_NAME} -c "grep -E '^rpcuser=' '$BITCOIN_CONF' | cut -d'=' -f2")
+RPC_PASSWORD=$(su - ${USER_NAME} -c "grep -E '^rpcpassword=' '$BITCOIN_CONF' | cut -d'=' -f2")
+
+if [ -z "$RPC_USER" ] || [ -z "$RPC_PASSWORD" ]; then
+    error_exit "Bitcoin Core RPC 정보를 찾을 수 없습니다. bitcoin.conf 파일을 확인해주세요."
+fi
+
 # 방화벽 설정 및 확인
 echo "방화벽 설정 중..."
 
 # 포트 상태 초기 확인
 echo "포트 상태 확인 중..."
-PORT_PID=$(lsof -t -i :50001 2>/dev/null)
+PORT_PID=$(lsof -t -i :50002 2>/dev/null)
 if [ -n "$PORT_PID" ]; then
     PROCESS_NAME=$(ps -p $PORT_PID -o comm=)
-    echo "포트 50001이 $PROCESS_NAME(PID: $PORT_PID)에 의해 사용 중입니다. 자동으로 종료합니다..."
+    echo "포트 50002가 $PROCESS_NAME(PID: $PORT_PID)에 의해 사용 중입니다. 자동으로 종료합니다..."
     kill $PORT_PID
     sleep 2
-    if lsof -i :50001 > /dev/null; then
+    if lsof -i :50002 > /dev/null; then
         echo "프로세스 강제 종료 중..."
         kill -9 $PORT_PID
         sleep 1
     fi
-    if lsof -i :50001 > /dev/null; then
-        error_exit "포트 50001을 해제할 수 없습니다. 수동으로 확인이 필요합니다."
+    if lsof -i :50002 > /dev/null; then
+        error_exit "포트 50002를 해제할 수 없습니다. 수동으로 확인이 필요합니다."
     fi
-    echo "포트 50001이 해제되었습니다."
+    echo "포트 50002가 해제되었습니다."
 fi
 
 # UFW 설정
@@ -73,11 +89,11 @@ if command -v ufw >/dev/null 2>&1; then
     fi
     
     # 포트 규칙 추가
-    sudo ufw allow 50001/tcp
+    sudo ufw allow 50002/tcp
     sudo ufw --force reload
     
     echo "UFW 규칙 확인:"
-    sudo ufw status | grep 50001 || echo "UFW 규칙이 없습니다."
+    sudo ufw status | grep 50002 || echo "UFW 규칙이 없습니다."
 else
     error_exit "UFW가 설치되어 있지 않습니다. 'apt-get install ufw' 명령어로 설치하세요."
 fi
@@ -115,11 +131,12 @@ run_as_user "source ${ELECTRUMX_VENV}/bin/activate && cd ${ELECTRUMX_DIR} && pip
 # 설정 파일 생성
 echo "ElectrumX 설정 파일 생성 중..."
 mkdir -p "${USER_HOME}/.electrumx"
+mkdir -p "${USER_HOME}/.electrumx/db"
 cat > "${USER_HOME}/.electrumx/config.env" << EOF
-DAEMON_URL=http://127.0.0.1:8332
+DAEMON_URL=http://${RPC_USER}:${RPC_PASSWORD}@127.0.0.1:8332
 DB_DIRECTORY=${USER_HOME}/.electrumx/db
 COIN=Bitcoin
-SERVICES=tcp://0.0.0.0:50001
+SERVICES=tcp://0.0.0.0:50002
 PEER_DISCOVERY=off
 PEER_ANNOUNCE=
 MAX_SESSIONS=1000
@@ -129,7 +146,6 @@ ALLOW_ROOT=false
 COST_SOFT_LIMIT=0
 COST_HARD_LIMIT=0
 REQUEST_TIMEOUT=30
-BANDWIDTH_LIMIT=2000000
 DONATION_ADDRESS=
 DB_ENGINE=leveldb
 LOG_LEVEL=info
@@ -141,6 +157,17 @@ EOF
 chown -R ${USER_NAME}:${USER_NAME} "${USER_HOME}/.electrumx"
 chmod 750 "${USER_HOME}/.electrumx"
 chmod 640 "${USER_HOME}/.electrumx/config.env"
+
+# 기존 서비스 파일 제거
+if [ -f "/etc/systemd/system/electrumx.service" ]; then
+    echo "기존 electrumx 서비스 중지 및 제거 중..."
+    systemctl stop electrumx
+    systemctl disable electrumx
+    sleep 3
+    rm -f "/etc/systemd/system/electrumx.service"
+    systemctl daemon-reload
+    systemctl reset-failed
+fi
 
 # systemd 서비스 파일 생성
 echo "systemd 서비스 파일 생성 중..."
@@ -179,30 +206,13 @@ systemctl daemon-reload
 systemctl enable electrumx
 systemctl start electrumx
 
-# 서비스 및 포트 상태 확인
-echo "서비스 및 포트 상태 확인 중..."
-MAX_ATTEMPTS=10
-ATTEMPT=1
-SERVICE_STARTED=false
-
-while [ $ATTEMPT -le $MAX_ATTEMPTS ] && [ "$SERVICE_STARTED" = "false" ]; do
-    if systemctl is-active --quiet electrumx && nc -zv localhost 50001 2>/dev/null; then
-        echo "ElectrumX 서비스가 성공적으로 시작되었고 포트 50001이 열렸습니다."
-        SERVICE_STARTED=true
-    else
-        echo "시도 $ATTEMPT/$MAX_ATTEMPTS: 서비스 시작 및 포트 열림 대기 중..."
-        sleep 10
-        ATTEMPT=$((ATTEMPT+1))
-    fi
-done
-
 if [ "$SERVICE_STARTED" = "false" ]; then
     echo "서비스 상태:"
     systemctl status electrumx
-    echo "포트 50001 상태:"
-    sudo netstat -tuln | grep 50001 || echo "포트가 사용 중이 아닙니다."
+    echo "포트 50002 상태:"
+    sudo netstat -tuln | grep 50002 || echo "포트가 사용 중이 아닙니다."
     echo "UFW 규칙:"
-    sudo ufw status verbose | grep 50001
+    sudo ufw status verbose | grep 50002
     echo "로그 확인:"
     journalctl -u electrumx --no-pager | tail -n 50
     error_exit "ElectrumX 서비스 시작 또는 포트 열기 실패"
