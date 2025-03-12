@@ -201,7 +201,10 @@ echo "Bitcoin 설정 파일 생성 중..."
 if [ "$(whoami)" = "root" ]; then
     # root로 실행 중인 경우 임시 파일을 생성한 후 소유권 변경
     cat > /tmp/bitcoin.conf.tmp << EOF || error_exit "임시 Bitcoin 설정 파일 생성에 실패했습니다."
+# RPC 인증 설정
 rpcauth=${RPC_AUTH}
+rpcuser=${USER_NAME}
+rpcpassword=${RPCPASSWORD}
 
 server=1
 txindex=1
@@ -239,7 +242,10 @@ EOF
 else
     # 일반 사용자로 실행 중인 경우 직접 생성
     cat > ${USER_HOME}/.bitcoin/bitcoin.conf << EOF || error_exit "Bitcoin 설정 파일 생성에 실패했습니다."
+# RPC 인증 설정
 rpcauth=${RPC_AUTH}
+rpcuser=${USER_NAME}
+rpcpassword=${RPCPASSWORD}
 
 server=1
 txindex=1
