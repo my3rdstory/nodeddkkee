@@ -183,7 +183,7 @@ auth = "${USER_NAME}:bitcoin"
 
 # 일렉트럼 서버 설정
 electrum_rpc_addr = "0.0.0.0:50001"
-log_filters = "TRACE"
+log_filters = "INFO"
 network = "bitcoin"
 
 # JSON-RPC 가져오기 설정
