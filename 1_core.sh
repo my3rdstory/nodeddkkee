@@ -176,25 +176,10 @@ sleep 3
 # Bitcoin 설정 파일 유효성 검사
 echo "Bitcoin 설정 파일 유효성 검사 중..."
 
-# rpcauth.py 다운로드 및 실행
-echo "RPC 인증 정보 생성 중..."
-wget -c -q https://raw.githubusercontent.com/bitcoin/bitcoin/master/share/rpcauth/rpcauth.py || error_exit "rpcauth.py 스크립트 다운로드에 실패했습니다."
-chmod +x rpcauth.py || error_exit "rpcauth.py 스크립트에 실행 권한을 부여할 수 없습니다."
-
-# rpcauth.py 스크립트 실행 결과를 변수에 저장
-RPC_AUTH_RESULT=$(./rpcauth.py ${USER_NAME} ${RPCPASSWORD}) || error_exit "RPC 인증 정보 생성에 실패했습니다."
-
-# 결과에서 rpcauth 문자열만 추출하여 변수에 저장
-RPC_AUTH=$(echo "${RPC_AUTH_RESULT}" | grep "^rpcauth=" | cut -d= -f2-)
-if [ -z "$RPC_AUTH" ]; then
-    error_exit "RPC 인증 문자열을 추출할 수 없습니다."
-fi
-
 # 생성된 RPC 인증 정보 출력
-echo "생성된 RPC 인증 정보:"
+echo "RPC 인증 정보:"
 echo "사용자: ${USER_NAME}"
 echo "비밀번호: ${RPCPASSWORD}"
-echo "rpcauth=${RPC_AUTH}"
 
 # bitcoin.conf 파일 생성
 echo "Bitcoin 설정 파일 생성 중..."
@@ -202,7 +187,6 @@ if [ "$(whoami)" = "root" ]; then
     # root로 실행 중인 경우 임시 파일을 생성한 후 소유권 변경
     cat > /tmp/bitcoin.conf.tmp << EOF || error_exit "임시 Bitcoin 설정 파일 생성에 실패했습니다."
 # RPC 인증 설정
-rpcauth=${RPC_AUTH}
 rpcuser=${USER_NAME}
 rpcpassword=${RPCPASSWORD}
 
@@ -243,7 +227,6 @@ else
     # 일반 사용자로 실행 중인 경우 직접 생성
     cat > ${USER_HOME}/.bitcoin/bitcoin.conf << EOF || error_exit "Bitcoin 설정 파일 생성에 실패했습니다."
 # RPC 인증 설정
-rpcauth=${RPC_AUTH}
 rpcuser=${USER_NAME}
 rpcpassword=${RPCPASSWORD}
 
