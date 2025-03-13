@@ -37,10 +37,10 @@ ssh mybtc@192.168.1.3
 - 동작 절차는 모두 쉘스크립트로 작성되어 있으므로 별도의 설치 프로그램 없이 바로 실행할 수 있습니다.
 
 ```bash
-wget https://raw.githubusercontent.com/my3rdstory/nodeddkkee/main/1_core.sh \
-     https://raw.githubusercontent.com/my3rdstory/nodeddkkee/main/2_electrs.sh \
-     https://raw.githubusercontent.com/my3rdstory/nodeddkkee/main/3_ts.sh \
-     https://raw.githubusercontent.com/my3rdstory/nodeddkkee/main/del.sh
+wget https://github.com/my3rdstory/nodeddkkee/blob/master/1_core.sh \
+     https://github.com/my3rdstory/nodeddkkee/blob/master/2_electrs.sh \
+     https://github.com/my3rdstory/nodeddkkee/blob/master/3_ts.sh \
+     https://github.com/my3rdstory/nodeddkkee/blob/master/del.sh
 ```
 
 #### 3. 다운로드 후 아래 명령어로 필요한 프로그램에 맞춰 실행합니다. 
