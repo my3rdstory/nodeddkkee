@@ -179,7 +179,7 @@ db_dir = "${USER_HOME}/.electrs/db"
 daemon_dir = "${USER_HOME}/.bitcoin"
 daemon_rpc_addr = "127.0.0.1:8332"
 daemon_p2p_addr = "127.0.0.1:8333"
-auth = "${USER_NAME}:bitcoin"
+# auth = "${USER_NAME}:bitcoin"
 
 # 일렉트럼 서버 설정
 electrum_rpc_addr = "0.0.0.0:50001"

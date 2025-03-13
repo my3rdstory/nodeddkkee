@@ -187,15 +187,15 @@ if [ "$(whoami)" = "root" ]; then
     # root로 실행 중인 경우 임시 파일을 생성한 후 소유권 변경
     cat > /tmp/bitcoin.conf.tmp << EOF || error_exit "임시 Bitcoin 설정 파일 생성에 실패했습니다."
 # RPC 인증 설정
-rpcuser=${USER_NAME}
-rpcpassword=${RPCPASSWORD}
+# rpcuser=${USER_NAME}
+# rpcpassword=${RPCPASSWORD}
 
 server=1
-txindex=1
+txindex=0
 daemon=1
-mempoolfullrbf=1
-mempoolexpiry=336
-maxmempool=500
+# mempoolfullrbf=1
+# mempoolexpiry=336
+# maxmempool=500
 
 rpcport=8332
 rpcbind=0.0.0.0
