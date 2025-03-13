@@ -172,24 +172,16 @@ fi
 # 설정 파일 디렉토리 생성
 mkdir -p "${USER_HOME}/.electrs"
 cat > "${USER_HOME}/.electrs/config.toml" << EOF
-# 데이터베이스 설정
-db_dir = "${USER_HOME}/.electrs/db"
 
-# 비트코인 데몬 설정
+db_dir = "${USER_HOME}/.electrs/db"
 daemon_dir = "${USER_HOME}/.bitcoin"
 daemon_rpc_addr = "127.0.0.1:8332"
 daemon_p2p_addr = "127.0.0.1:8333"
 # auth = "${USER_NAME}:bitcoin"
-
-# 일렉트럼 서버 설정
 electrum_rpc_addr = "0.0.0.0:50001"
 log_filters = "INFO"
 network = "bitcoin"
-
-# JSON-RPC 가져오기 설정
 jsonrpc_import = true
-
-# 시스템 설정
 index_batch_size = 10
 index_lookup_limit = 100
 server_banner = "Welcome to Electrs"

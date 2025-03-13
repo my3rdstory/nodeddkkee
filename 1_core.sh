@@ -14,6 +14,35 @@ else
     REAL_USER=$(logname 2>/dev/null || echo $USER)
 fi
 
+# 시스템 업데이트 및 의존성 설치
+echo "시스템 업데이트 및 의존성 설치 중..."
+
+# 패키지 목록 업데이트
+apt-get update || error_exit "패키지 목록 업데이트 실패"
+
+# 시스템 업그레이드
+apt-get upgrade -y || error_exit "시스템 업그레이드 실패"
+
+# 필수 도구 및 의존성 설치
+PACKAGES=(
+    glances
+    htop
+    curl
+    git
+    jq
+    wget
+    tar
+    net-tools
+    python3
+    python3-pip
+)
+
+echo "필수 패키지 설치 중..."
+for package in "${PACKAGES[@]}"; do
+    echo "패키지 설치 중: $package"
+    apt-get install -y "$package" || echo "경고: $package 설치 실패"
+done
+
 # Bitcoin Core 버전 설정
 CORE_VERSION="28.1"
 
@@ -49,13 +78,6 @@ elif pgrep bitcoind > /dev/null; then
     bitcoin-cli stop 2>/dev/null || pkill bitcoind
     sleep 5
 fi
-
-# .bitcoin 디렉토리 정리
-# echo ".bitcoin 디렉토리 정리 중..."
-# if [ -d "${USER_HOME}/.bitcoin" ]; then
-#     rm -rf ${USER_HOME}/.bitcoin
-#     echo ".bitcoin 디렉토리가 삭제되었습니다."
-# fi
 
 # .bitcoin 디렉토리 존재 여부 확인
 if [ -d "${USER_HOME}/.bitcoin" ]; then
@@ -191,11 +213,10 @@ if [ "$(whoami)" = "root" ]; then
 # rpcpassword=${RPCPASSWORD}
 
 server=1
-txindex=0
+txindex=1
 daemon=1
-# mempoolfullrbf=1
-# mempoolexpiry=336
-# maxmempool=500
+
+mempoolfullrbf=1
 
 rpcport=8332
 rpcbind=0.0.0.0
@@ -203,20 +224,11 @@ rpcallowip=127.0.0.1
 rpcallowip=10.0.0.0/8
 rpcallowip=172.0.0.0/8
 rpcallowip=192.0.0.0/8
-zmqpubrawblock=tcp://0.0.0.0:28332
-zmqpubrawtx=tcp://0.0.0.0:28333
-zmqpubhashblock=tcp://0.0.0.0:28334
 whitelist=127.0.0.1
 
-# 일반 인터넷 연결 허용
-addnode=mainnet.bitcoin.ninja
 discover=1
 dnsseed=1
 dns=1
-
-# 연결 설정
-maxconnections=125
-maxuploadtarget=5000
 EOF
     # 파일 복사 및 소유권 변경
     cp /tmp/bitcoin.conf.tmp ${USER_HOME}/.bitcoin/bitcoin.conf || error_exit "Bitcoin 설정 파일 복사에 실패했습니다."
@@ -231,11 +243,10 @@ else
 # rpcpassword=${RPCPASSWORD}
 
 server=1
-txindex=0
+txindex=1
 daemon=1
-# mempoolfullrbf=1
-# mempoolexpiry=336
-# maxmempool=500
+
+mempoolfullrbf=1
 
 rpcport=8332
 rpcbind=0.0.0.0
@@ -243,20 +254,11 @@ rpcallowip=127.0.0.1
 rpcallowip=10.0.0.0/8
 rpcallowip=172.0.0.0/8
 rpcallowip=192.0.0.0/8
-zmqpubrawblock=tcp://0.0.0.0:28332
-zmqpubrawtx=tcp://0.0.0.0:28333
-zmqpubhashblock=tcp://0.0.0.0:28334
 whitelist=127.0.0.1
 
-# 일반 인터넷 연결 허용
-addnode=mainnet.bitcoin.ninja
 discover=1
 dnsseed=1
 dns=1
-
-# 연결 설정
-maxconnections=125
-maxuploadtarget=5000
 EOF
     chmod 600 ${USER_HOME}/.bitcoin/bitcoin.conf || error_exit "Bitcoin 설정 파일 권한 변경에 실패했습니다."
 fi

@@ -74,5 +74,10 @@ done
 
 echo "서비스 중지 확인 완료"
 
+echo "시스템 패키지 제거 중..."
+sudo apt purge -y glances htop curl git jq wget tar net-tools python3 python3-pip clang cmake build-essential cargo lsof openssl
+sudo apt autoremove -y
+sudo apt clean
+
 echo "===== 모든 제거 작업이 완료되었습니다 ====="
 
