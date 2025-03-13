@@ -34,13 +34,10 @@ ssh mybtc@192.168.1.3
 - 동작 절차는 모두 쉘스크립트로 작성되어 있으므로 별도의 설치 프로그램 없이 바로 실행할 수 있습니다.
 
 ```bash
-wget https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/auto.sh \
-     https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/0_check.sh \
-     https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/1_node.sh \
-     https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/2_electrs.sh \
-     https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/3_tor.sh \
-     https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/del.sh \
-     https://raw.githubusercontent.com/my3rdstory/fullnodeddkkee/main/nodeddkkee_env.sh 
+wget https://raw.githubusercontent.com/my3rdstory/nodeddkkee/main/1_core.sh \
+     https://raw.githubusercontent.com/my3rdstory/nodeddkkee/main/2_electrs.sh \
+     https://raw.githubusercontent.com/my3rdstory/nodeddkkee/main/3_ts.sh \
+     https://raw.githubusercontent.com/my3rdstory/nodeddkkee/main/del.sh
 ```
 
 3. 다운로드 후 아래 명령어로 필요한 프로그램에 맞춰 실행합니다. 
@@ -71,73 +68,3 @@ sudo bash 2_electrs.sh
 ```bash
 sudo bash 3_ts.sh
 ```
-
-## 기능
-- Bitcoin Core v28.1 자동 설치 및 설정: 버전을 바꾸려면 1_core.sh 파일에서 버전 변경 필요
-- RPC 인터페이스 자동 구성
-- 시스템 서비스로 자동 실행 설정
-- 타임체인 데이터 검증 및 저장
-- 테일스케일 연동 및 연결 정보 json 파일로 저장
-
-## 사용 방법
-
-1. 설치가 완료된 후 다음 명령어로 비트코인 노드 상태를 확인할 수 있습니다.
-
-- 윈도우 터미널 화면 분할 기능을 이용해서 2개 이상의 현황을 살펴볼 수도 있습니다.
-- 윈도우 파워쉘 기준으로 alt+shift+d 단축키 누르면 창을 2개로 분리할 수 있습니다.
-- 각 창에 하나는 코어 블록 다운로드 확인 명령어를, 다른 창에는 풀크럼 로그 실시간 확인 명령어를 입력하면 2개의 설치 및 동기화 현황을 실시간으로 지켜볼 수 있습니다.
-
-```bash
-# 타임체인 정보 확인
-bitcoin-cli getblockchaininfo
-
-# 코어 피어 연결 정보 확인
-bitcoin-cli getpeerinfo
-
-# 코어 블록 다운로드 로그 확인
-tail -f ~/.bitcoin/debug.log
-
-# 일렉트라 로그 확인
-sudo journalctl -u electrs -f
-
-# 일렉트라 최근 5분 로그 확인
-sudo journalctl -u electrs --since="-5 minutes"
-
-# 일렉트라 실행 여부 확인
-ps aux | grep electrs
-
-# 테일스케일 정보 확인
-nano ts_info.json
-
-# 코어 인바운드/아웃바운드 현황 확인
-bitcoin-cli getpeerinfo | jq '{inbound:map(select(.inbound==true)) | length, outbound:map(select(.inbound==false)) | length}'
-
-# 노드의 기기 현황 확인 - glances 사용
-glances
-
-# 노드의 기기 현황 확인 - htop 사용
-htop
-
-```
-2. 실행 중 멈췄다면 ctrl+c 키를 눌러 설치 프로세스를 종료한 후 다시 설치 스크립트를 실행해 보세요.
-3. 재설치를 위해 프로세스를 한번에 멈추려면 del.sh 파일을 실행하세요.
-4. 그래도 안된다면 에러 메시지 보면서 스스로 대응하셔야 합니다.
-5. 상세한 내용은 맨 아래 스페셜땡쓰 링크에서 확인하세요.
-
-## 주의
-
-- 저는 코딩 못합니다. 커서 조져서 대충 만든거에요. 
-- 제 오드로이드 H4 기기에서만 테스트했습니다. 다른 기기에서 동작을 보장하지 않습니다. 
-- 수정 요청하셔도 제가 대응하지 못 할 수 있습니다. 필요한 부분은 포크해서 마음껏 수정해서 사용하세요.
-
-## 라이센스
-MIT
-
-## 연락처
-
-- 작성자: DedSec
-- 엑스: https://x.com/_orangepillkr
-- 유튜브: https://www.youtube.com/@orangepillkr/
-- 스페셜땡쓰: 
-   - 셀프카스타드님: https://x.com/self_custard
-   -⚡️돌돌₿⚡️ https://x.com/s01ist_btc
