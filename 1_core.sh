@@ -177,9 +177,9 @@ sleep 3
 echo "Bitcoin 설정 파일 유효성 검사 중..."
 
 # 생성된 RPC 인증 정보 출력
-echo "RPC 인증 정보:"
-echo "사용자: ${USER_NAME}"
-echo "비밀번호: ${RPCPASSWORD}"
+# echo "RPC 인증 정보:"
+# echo "사용자: ${USER_NAME}"
+# echo "비밀번호: ${RPCPASSWORD}"
 
 # bitcoin.conf 파일 생성
 echo "Bitcoin 설정 파일 생성 중..."
@@ -227,15 +227,15 @@ else
     # 일반 사용자로 실행 중인 경우 직접 생성
     cat > ${USER_HOME}/.bitcoin/bitcoin.conf << EOF || error_exit "Bitcoin 설정 파일 생성에 실패했습니다."
 # RPC 인증 설정
-rpcuser=${USER_NAME}
-rpcpassword=${RPCPASSWORD}
+# rpcuser=${USER_NAME}
+# rpcpassword=${RPCPASSWORD}
 
 server=1
-txindex=1
+txindex=0
 daemon=1
-mempoolfullrbf=1
-mempoolexpiry=336
-maxmempool=500
+# mempoolfullrbf=1
+# mempoolexpiry=336
+# maxmempool=500
 
 rpcport=8332
 rpcbind=0.0.0.0
