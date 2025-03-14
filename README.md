@@ -146,5 +146,5 @@ MIT
 - 스페셜땡쓰: 
    
    - 셀프카스타드님: https://x.com/self_custard   
-   -⚡️돌돌₿⚡️ https://x.com/s01ist_btc
+   - ⚡️돌돌₿⚡️ https://x.com/s01ist_btc
 - 참고문헌: https://florentine-porkpie-563.notion.site/2e905cab90ae4a979711ec40bbb85d64?v=7c329be91bd44a03928fcfa3ed4c3fe4   
