@@ -13,7 +13,8 @@
 설치방법 영상: [https://youtu.be/OAzbm4wiswQ](https://youtu.be/OAzbm4wiswQ)
 
 ### 필수 조건
-- 리눅스 운영체제 (Ubuntu/Debian 계열 권장)
+- x86 기반의 미니PC: 오드로이드H4 기기에서 테스트
+- 리눅스 운영체제 (Ubuntu/Debian 계열 권장): 우분투22.04 서버 버전으로 테스트
 - 최소 1TB 이상의 저장 공간
 - 최소 8GB RAM
 - 안정적인 인터넷 연결
