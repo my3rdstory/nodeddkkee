@@ -71,19 +71,29 @@ create_service_file() {
     cat > /etc/systemd/system/${DASHBOARD_SERVICE}.service << EOF
 [Unit]
 Description=Bitcoin Node Dashboard
-After=network.target bitcoind.service
-Requires=bitcoind.service
+After=network.target
 
 [Service]
+Type=simple
 User=${REAL_USER}
 WorkingDirectory=${WORK_DIR}
+Environment="RPC_USER=$(grep -oP '^rpcuser=\K.*' /home/${REAL_USER}/.bitcoin/bitcoin.conf)"
+Environment="RPC_PASS=$(grep -oP '^rpcpassword=\K.*' /home/${REAL_USER}/.bitcoin/bitcoin.conf)"
 ExecStart=/usr/local/bin/streamlit run ${DASHBOARD_PATH} --server.address 0.0.0.0 --server.port 8501
+StandardOutput=append:/var/log/dashboard.log
+StandardError=append:/var/log/dashboard.error.log
 Restart=always
 RestartSec=3
+KillMode=mixed
+TimeoutStopSec=5
 
 [Install]
 WantedBy=multi-user.target
 EOF
+
+    # 로그 파일 생성 및 권한 설정
+    touch /var/log/dashboard.log /var/log/dashboard.error.log
+    chown ${REAL_USER}:${REAL_USER} /var/log/dashboard.log /var/log/dashboard.error.log
 }
 
 # 필요한 패키지 설치
