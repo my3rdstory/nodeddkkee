@@ -135,7 +135,13 @@ htop
 
 - 스트림릿(Streamlit)을 사용하여 간단한 미니멀 대시보드를 추가했습니다.
 - live 디렉토리를 수동으로 만들고, 그 속에 dashboard.sh, dashboard.py, requirements.txt 넣습니다.
-- .env 파일을 만든 후 env.example 파일에 있는 형식과 같이 rpcuser, rpcpassword 값을 넣습니다. 코어에 설정되어 있는 값을 넣어야 합니다.
+- .env 파일을 만든 후 다음 형식과 같이 rpcuser, rpcpassword 값을 넣습니다. 코어에 설정되어 있는 값을 넣어야 코어 데이터를 대시보드에서 사용할 수 있습니다.
+
+```bash
+RPC_USER=mybtc
+RPC_PASS=bitcoin 
+```
+
 - 이후 dashboard.sh 실행하면 설치와 설정 파일이 자동으로 생성됩니다. 
 - 설치 중간에 오류가 있다면 의존성 설치 후 수동으로 실행해도 됩니다.
 - 실행 명령어는 아래와 같습니다.
