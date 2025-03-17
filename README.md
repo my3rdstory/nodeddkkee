@@ -150,6 +150,18 @@ RPC_PASS=bitcoin
 sudo bash dashboard.sh
 ```
 
+- 스트림릿 대시보드는 8501 포트를 사용합니다. 따라서 포트를 열어줘야 합니다.
+
+```bash
+sudo ufw allow 8501/tcp
+```
+
+- 설치와 설정이 끝나면 다음과 같은 주소로 웹브라우저에서 접속합니다.
+
+```bash
+http://localhost:8501/
+```
+
 ## 주의
 
 - 저는 코딩 못합니다. 커서 조져서 대충 만든거에요. 
