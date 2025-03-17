@@ -188,16 +188,6 @@ def get_system_info():
 # 타이틀
 st.title("비트코인 노드 정보")
 
-# 자동 새로고침
-if "refresh_counter" not in st.session_state:
-    st.session_state.refresh_counter = 0
-    st.session_state.last_refresh = time.time()
-
-current_time = time.time()
-if current_time - st.session_state.last_refresh >= 10:
-    st.session_state.refresh_counter += 1
-    st.session_state.last_refresh = current_time
-
 # 데이터 가져오기
 col1, col2 = st.columns(2)
 
@@ -273,14 +263,11 @@ with st.container():
             **네트워크 전송**: ↑ {system_info['net_sent']} ↓ {system_info['net_recv']}
         """, unsafe_allow_html=True)
 
-# 자동 새로고침을 위한 스크립트
-st.markdown(
-    f"""
-    <script>
-        setTimeout(function(){{
-            window.location.reload();
-        }}, 10000);
-    </script>
-    """,
-    unsafe_allow_html=True
-) 
+# 마지막에 자동 새로고침 로직 추가
+if 'last_refresh' not in st.session_state:
+    st.session_state.last_refresh = time.time()
+
+current_time = time.time()
+if current_time - st.session_state.last_refresh >= 10:
+    st.session_state.last_refresh = current_time
+    st.rerun() 
