@@ -1,7 +1,8 @@
 import streamlit as st
 import requests
 import time
-from datetime import datetime
+import psutil
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
 from pathlib import Path
@@ -129,6 +130,61 @@ def make_rpc_request(method, params=[]):
         st.error(f"RPC 요청 실패: {str(e)}")
         return None
 
+def get_size(bytes):
+    """바이트를 읽기 쉬운 형식으로 변환"""
+    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if bytes < 1024:
+            return f"{bytes:.2f} {unit}"
+        bytes /= 1024
+
+def get_system_info():
+    """시스템 정보 수집"""
+    try:
+        # CPU 정보
+        cpu_percent = psutil.cpu_percent(interval=1)
+        cpu_freq = psutil.cpu_freq()
+        cpu_count = psutil.cpu_count()
+        
+        # 메모리 정보
+        memory = psutil.virtual_memory()
+        
+        # 디스크 정보
+        disk = psutil.disk_usage('/')
+        
+        # 네트워크 정보
+        net_io = psutil.net_io_counters()
+        
+        # 온도 정보 (가능한 경우)
+        temperatures = {}
+        try:
+            temps = psutil.sensors_temperatures()
+            if temps:
+                # CPU 온도 (시스템에 따라 키가 다를 수 있음)
+                for key in ['coretemp', 'cpu_thermal', 'cpu-thermal']:
+                    if key in temps:
+                        temperatures['CPU'] = temps[key][0].current
+                        break
+        except:
+            pass
+
+        return {
+            'cpu_percent': cpu_percent,
+            'cpu_freq': cpu_freq.current / 1000 if cpu_freq else None,  # GHz로 변환
+            'cpu_count': cpu_count,
+            'memory_percent': memory.percent,
+            'memory_used': get_size(memory.used),
+            'memory_total': get_size(memory.total),
+            'disk_percent': disk.percent,
+            'disk_used': get_size(disk.used),
+            'disk_total': get_size(disk.total),
+            'net_sent': get_size(net_io.bytes_sent),
+            'net_recv': get_size(net_io.bytes_recv),
+            'temperatures': temperatures
+        }
+    except Exception as e:
+        st.error(f"시스템 정보 수집 중 오류 발생: {str(e)}")
+        return None
+
 # 타이틀
 st.title("비트코인 노드 정보")
 
@@ -202,14 +258,19 @@ with col2:
 # 시스템 정보
 with st.container():
     st.subheader("💻 시스템 정보")
-    system_info = make_rpc_request("getsysteminfo")
+    system_info = get_system_info()
     if system_info:
+        temp_info = ""
+        if system_info['temperatures']:
+            temp_info = f"**CPU 온도**: {system_info['temperatures'].get('CPU', 'N/A')}°C<br>"
+            
         st.markdown(f"""
-            **CPU 사용률**: {system_info.get('cpu_percent')}%<br>
-            **메모리 사용률**: {system_info.get('memory_percent')}%<br>
-            **디스크 사용률**: {system_info.get('disk_percent')}%<br>
-            **프로세스 수**: {system_info.get('process_count')}<br>
-            **가동 시간**: {system_info.get('uptime_hours', 0):.1f}시간
+            **CPU 사용률**: {system_info['cpu_percent']}% (코어 {system_info['cpu_count']}개)<br>
+            **CPU 주파수**: {system_info['cpu_freq']:.2f} GHz<br>
+            {temp_info}
+            **메모리**: {system_info['memory_used']} / {system_info['memory_total']} ({system_info['memory_percent']}%)<br>
+            **디스크**: {system_info['disk_used']} / {system_info['disk_total']} ({system_info['disk_percent']}%)<br>
+            **네트워크 전송**: ↑ {system_info['net_sent']} ↓ {system_info['net_recv']}
         """, unsafe_allow_html=True)
 
 # 자동 새로고침을 위한 스크립트
