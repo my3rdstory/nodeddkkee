@@ -178,11 +178,13 @@ with col2:
         if network_info:
             version = str(network_info.get('version', 0)).zfill(6)
             formatted_version = f"{version[:2]}.{version[2:4]}.{version[4:]}"
+            relayfee = network_info.get('relayfee', 0)
+            relayfee_sats = int(relayfee * 100_000_000)  # BTC to satoshi
             st.markdown(f"""
                 **버전**: {formatted_version}<br>
                 **서브버전**: {network_info.get('subversion')}<br>
                 **연결된 노드 수**: {network_info.get('connections')}<br>
-                **릴레이 수수료**: {network_info.get('relayfee')} BTC<br>
+                **릴레이 수수료**: {relayfee:.8f} BTC ({relayfee_sats:,} satoshi)<br>
                 **네트워크**: {'활성' if network_info.get('networkactive') else '비활성'}
             """, unsafe_allow_html=True)
 
