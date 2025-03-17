@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
 from pathlib import Path
+import pandas as pd
 
 # 환경 변수 로드
 env_path = Path('.env')
@@ -246,7 +247,7 @@ with col2:
             """, unsafe_allow_html=True)
 
 # 시스템 정보
-with st.container():
+with col1:
     st.subheader("💻 시스템 정보")
     system_info = get_system_info()
     if system_info:
@@ -262,6 +263,31 @@ with st.container():
             **디스크**: {system_info['disk_used']} / {system_info['disk_total']} ({system_info['disk_percent']}%)<br>
             **네트워크 전송**: ↑ {system_info['net_sent']} ↓ {system_info['net_recv']}
         """, unsafe_allow_html=True)
+
+with col2:
+    st.subheader("👥 피어 정보")
+    peer_info = make_rpc_request("getpeerinfo")
+    if peer_info:
+        # 피어 데이터 정리
+        peer_data = []
+        for peer in peer_info:
+            # 연결 시간 계산
+            connected_time = datetime.now() - timedelta(seconds=peer.get('conntime', 0))
+            connected_time_str = f"{(datetime.now() - connected_time).days}일 {(datetime.now() - connected_time).seconds // 3600}시간"
+            
+            peer_data.append({
+                "주소": peer.get('addr', '').split(':')[0],
+                "서브버전": peer.get('subver', '').replace('/', ''),
+                "핑(ms)": f"{peer.get('pingtime', 0)*1000:.0f}",
+                "연결시간": connected_time_str
+            })
+        
+        # 데이터프레임으로 변환하여 표시
+        if peer_data:
+            df = pd.DataFrame(peer_data)
+            st.dataframe(df, hide_index=True)
+        else:
+            st.info("연결된 피어가 없습니다.")
 
 # 마지막에 자동 새로고침 로직 추가
 if 'last_refresh' not in st.session_state:
