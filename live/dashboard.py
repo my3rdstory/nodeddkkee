@@ -46,6 +46,15 @@ st.markdown("""
         max-width: 100%;
     }
     
+    /* 피어 정보 섹션 스타일 제외 */
+    div[data-testid="stVerticalBlock"] > div > div[data-testid="stVerticalBlock"]:has(div[data-testid="stDataFrame"]) {
+        background-color: transparent;
+        padding: 0;
+        margin: 0;
+        box-shadow: none;
+        border: none;
+    }
+    
     /* 데이터 항목 카드 스타일 */
     .element-container p {
         background-color: white;
@@ -89,6 +98,15 @@ st.markdown("""
     /* 레이아웃 정렬 */
     div.row-widget.stHorizontal {
         gap: 0.5rem;
+    }
+    
+    /* 데이터프레임 스타일 */
+    div[data-testid="stDataFrame"] {
+        background-color: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border: 1px solid #eef1f5;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -248,21 +266,20 @@ with col2:
 
 # 시스템 정보
 with col1:
-    st.subheader("💻 시스템 정보")
-    system_info = get_system_info()
-    if system_info:
-        temp_info = ""
-        if system_info['temperatures']:
-            temp_info = f"**CPU 온도**: {system_info['temperatures'].get('CPU', 'N/A')}°C<br>"
+    with st.container():
+        st.subheader("💻 시스템 정보")
+        system_info = get_system_info()
+        if system_info:
+            temp_info = ""
+            if system_info['temperatures']:
+                temp_info = f"**CPU 온도**: {system_info['temperatures'].get('CPU', 'N/A')}°C<br>"
             
-        st.markdown(f"""
-            **CPU 사용률**: {system_info['cpu_percent']}% (코어 {system_info['cpu_count']}개)<br>
-            **CPU 주파수**: {system_info['cpu_freq']:.2f} GHz<br>
-            {temp_info}
-            **메모리**: {system_info['memory_used']} / {system_info['memory_total']} ({system_info['memory_percent']}%)<br>
-            **디스크**: {system_info['disk_used']} / {system_info['disk_total']} ({system_info['disk_percent']}%)<br>
-            **네트워크 전송**: ↑ {system_info['net_sent']} ↓ {system_info['net_recv']}
-        """, unsafe_allow_html=True)
+            st.markdown(f"""
+                **CPU 사용률**: {system_info['cpu_percent']}% (코어 {system_info['cpu_count']}개)<br>
+                **메모리**: {system_info['memory_used']} / {system_info['memory_total']} ({system_info['memory_percent']}%)<br>
+                **디스크**: {system_info['disk_used']} / {system_info['disk_total']} ({system_info['disk_percent']}%)<br>
+                **네트워크 전송**: ↑ {system_info['net_sent']} ↓ {system_info['net_recv']}
+            """, unsafe_allow_html=True)
 
 with col2:
     st.subheader("👥 피어 정보")
@@ -270,22 +287,17 @@ with col2:
     if peer_info:
         # 피어 데이터 정리
         peer_data = []
-        for peer in peer_info:
-            # 연결 시간 계산
-            connected_time = datetime.now() - timedelta(seconds=peer.get('conntime', 0))
-            connected_time_str = f"{(datetime.now() - connected_time).days}일 {(datetime.now() - connected_time).seconds // 3600}시간"
-            
+        for peer in peer_info:                
             peer_data.append({
                 "주소": peer.get('addr', '').split(':')[0],
                 "서브버전": peer.get('subver', '').replace('/', ''),
-                "핑(ms)": f"{peer.get('pingtime', 0)*1000:.0f}",
-                "연결시간": connected_time_str
+                "핑(ms)": f"{peer.get('pingtime', 0)*1000:.0f}"
             })
         
         # 데이터프레임으로 변환하여 표시
         if peer_data:
             df = pd.DataFrame(peer_data)
-            st.dataframe(df, hide_index=True)
+            st.dataframe(df, hide_index=True, use_container_width=True)
         else:
             st.info("연결된 피어가 없습니다.")
 
