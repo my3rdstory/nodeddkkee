@@ -21,6 +21,9 @@ st.set_page_config(
 # CSS 스타일 추가
 st.markdown("""
 <style>
+    /* 탑바 완전히 숨기기 */
+    header {display: none !important;}
+    
     /* 전체 배경색 설정 */
     .stApp {
         background-color: #f5f7fa;
@@ -31,7 +34,7 @@ st.markdown("""
         max-width: 70%;
         padding-left: 5%;
         padding-right: 5%;
-        padding-top: 3rem;
+        padding-top: 1rem;
         margin: 0 auto;
     }
     
@@ -108,6 +111,13 @@ st.markdown("""
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         border: 1px solid #eef1f5;
     }
+
+    /* 추가 UI 요소 숨기기 */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    .stDeployButton {display: none;}
+    div[data-testid="stToolbar"] {visibility: hidden;}
+    .stDecoration {display: none;}
 </style>
 """, unsafe_allow_html=True)
 
